@@ -95,6 +95,43 @@ Make sure you update the `CHANGE-ME` items in the section of the `project.clj` t
 You can also override these settings with environmental variables in the form of `OPEN_COMPANY_AUTH_PASSPHRASE` and
 `AWS_ACCESS_KEY_ID`, etc. Use environmental variables to provide production secrets when running in production.
 
+#### Slack proxy (ngrok)
+
+ngrok allows you to setup a secure web tunnel for HTTP/S requests to your
+localhost. You'll need this to utilize the Slack webhook during local
+development so Slack can communicate with your local development environment.
+
+ngrok is trivial to setup:
+
+1. [Download](https://ngrok.com/download) the version for your operating system.
+1. Unzip the download and put ngrok someplace handy for you (in your path is good!)
+1. Verify you can run ngrok with: `ngrok help`
+
+To use the webhook from Slack with local development, you need to run ngrok, then configure your Slack integration.
+
+First start the Slack Router Service (see below), and start the ngrok tunnel:
+
+```console
+ngrok http 3009
+```
+
+Note the URL ngrok provides. It will look like: `http://6ae20d9b.ngrok.io` -> localhost:3009
+
+To configure the Slack to use the ngrok tunnel as the destination of link_shared events. Go to
+[Your Apps](https://api.slack.com/apps) and click the "Carrot (Local Development)" app.
+
+Click the "Event Subscriptions" navigation in the menu. Click the toggle on.
+
+Add the URL provided by ngrok above, modifying `http` to `https` and with a `/slack/unfurl` suffix,
+e.g. `https://6ae20d9b.ngrok.io/slack/unfurl`
+
+ Click the "Add Team Event" button and add the `link_shared` event. Click the "Add Bot User Event" button and
+ add the `link_shared` event.
+
+Click the "Save Changes" button.
+
+NB: Make sure when you are done testing locally, you disable the "Enable Events" toggle so Slack will stop trying
+to echo events to your local environment via ngrok.
 
 ## Usage
 
