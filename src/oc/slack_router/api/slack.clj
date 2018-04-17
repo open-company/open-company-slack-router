@@ -6,13 +6,19 @@
             [liberator.core :refer (defresource by-method)]
             [cheshire.core :as json]
             [oc.lib.api.common :as api-common]
-            [oc.lib.slack :as slack-lib]
             [oc.lib.jwt :as lib-jwt]
+            [oc.slack-router.slack-unfurl :as slack-unfurl]
             [oc.slack-router.config :as config]))
 
 (defn render-slack-unfurl [body]
-  (let [event (get body "event")]
+  (let [event (get body "event")
+        links (get event "links")]
     (timbre/debug body event)
+    (timbre/debug links)
+    (doseq [link links]
+      ;; Post back to slack with added info
+      (slack-unfurl/unfurl link)
+      )
     {:status 200 :body (json/generate-string {})}))
 
 (defn- slack-event-handler

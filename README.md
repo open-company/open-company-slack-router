@@ -130,6 +130,11 @@ e.g. `https://6ae20d9b.ngrok.io/slack/unfurl`
 
 Click the "Save Changes" button.
 
+You will need to add domains to the slack app configuration.
+`localhost` for local dev
+`staging.carrot.io` for staging
+`beta.carrot.io` for beta
+
 NB: Make sure when you are done testing locally, you disable the "Enable Events" toggle so Slack will stop trying
 to echo events to your local environment via ngrok.
 
