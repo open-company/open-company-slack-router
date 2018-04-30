@@ -44,6 +44,9 @@
 (defonce aws-access-key-id (env :aws-access-key-id))
 (defonce aws-secret-access-key (env :aws-secret-access-key))
 
+;; ----- AWS SNS -----
+(defonce aws-sns-slack-topic-arn (env :aws-sns-slack-topic-arn))
+  
 ;; ----- JWT -----
 
 (defonce passphrase (env :open-company-auth-passphrase))

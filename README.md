@@ -73,7 +73,9 @@ lein deps
 
 A secret is shared between the [Slack Router service](https://github.com/open-company/open-company-slack-router) and the Auth service for creating and validating [JSON Web Tokens](https://jwt.io/).
 
-A [Slack App](https://api.slack.com/apps) needs to be created for OAuth authentication and events. For local development, create a Slack app with a Redirect URI of `http://localhost:3003/slack-oauth` and get the client ID and secret from the Slack app you create.  TODO: add info about configuration for receiving events.
+A [Slack App](https://api.slack.com/apps) needs to be created for OAuth authentication and events. For local development, create a Slack app with a Redirect URI of `http://localhost:3003/slack-oauth` and get the client ID and secret from the Slack app you create.  From the /apps url you will be able to chose 'Event Subscriptions' and then turn on the 'Enable Events' toggle.  Once this is turned on the router will begin receiving events from Slack.
+
+An [AWS SNS](https://aws.amazon.com/sns/) pub/sub topic is used to push slack events to interested listeners. To take advantage of this capability, configure the `aws-sns-slack-topic-arn` with the ARN (Amazon Resource Name) of the SNS topic you setup in AWS.
 
 Make sure you update the `CHANGE-ME` items in the section of the `project.clj` that looks like this to contain your actual JWT, Slack, and AWS secrets:
 
@@ -88,6 +90,7 @@ Make sure you update the `CHANGE-ME` items in the section of the `project.clj` t
     :open-company-slack-client-secret "CHANGE-ME"
     :aws-access-key-id "CHANGE-ME"
     :aws-secret-access-key "CHANGE-ME"
+    :aws-sns-slack-topic-arn "" ; SNS topic to publish notifications (optional)
     :log-level "debug"
   }
 ```
@@ -179,6 +182,14 @@ To run the tests locally:
 ```console
 lein test!
 ```
+
+## Technical Design
+
+The Slack Router service current has two responsibilities:
+
+- Process unfurl requests
+- Post Slack message events to an SNS topic.
+
 
 
 ## Participation

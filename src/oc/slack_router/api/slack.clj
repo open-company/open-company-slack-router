@@ -8,6 +8,7 @@
             [oc.lib.api.common :as api-common]
             [oc.slack-router.auth :as auth]
             [oc.slack-router.slack-unfurl :as slack-unfurl]
+            [oc.slack-router.async.slack-sns :as slack-sns]
             [oc.slack-router.config :as config]))
 
 (defn render-slack-unfurl [token body]
@@ -64,8 +65,10 @@
               slack-team-id (get body "team_id")]
           (doseq [slack-user slack-users]
               (let [user-token (auth/user-token slack-user slack-team-id)]
-                (render-slack-unfurl user-token body))))))
-     :else 
+                (render-slack-unfurl user-token body))))
+        :default
+        (slack-sns/send-trigger! body)))
+     :default
      {:status 200})))
 
 ;; ----- Resources - see: http://clojure-liberator.github.io/liberator/assets/img/decision-graph.svg
