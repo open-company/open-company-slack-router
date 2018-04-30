@@ -6,19 +6,18 @@
             [liberator.core :refer (defresource by-method)]
             [cheshire.core :as json]
             [oc.lib.api.common :as api-common]
-            [oc.lib.jwt :as lib-jwt]
+            [oc.slack-router.auth :as auth]
             [oc.slack-router.slack-unfurl :as slack-unfurl]
             [oc.slack-router.config :as config]))
 
-(defn render-slack-unfurl [body]
+(defn render-slack-unfurl [token body]
   (let [event (get body "event")
-        links (get event "links")]
-    (timbre/debug body event)
-    (timbre/debug links)
+        links (get event "links")
+        message_ts (get event "message_ts")
+        channel (get event "channel")]
     (doseq [link links]
       ;; Post back to slack with added info
-      (slack-unfurl/unfurl link)
-      )
+      (slack-unfurl/unfurl token channel link message_ts))
     {:status 200 :body (json/generate-string {})}))
 
 (defn- slack-event-handler
@@ -61,8 +60,11 @@
         (= event-type "link_shared")
         ;; Handle the unfurl request
         ;; https://api.slack.com/docs/message-link-unfurling
-        (render-slack-unfurl body)))
-     
+        (let [slack-users (get body "authed_users")
+              slack-team-id (get body "team_id")]
+          (doseq [slack-user slack-users]
+              (let [user-token (auth/user-token slack-user slack-team-id)]
+                (render-slack-unfurl user-token body))))))
      :else 
      {:status 200})))
 

@@ -3,27 +3,15 @@
   slack url."
   (:require [org.httpkit.client :as http]
             [cheshire.core :as json]
-            [oc.lib.jwt :as jwt]
             [oc.lib.slack :as slack-lib]
             [taoensso.timbre :as timbre]
+            [oc.lib.jwt :as jwt]
             [oc.slack-router.config :as config]))
 
-(defn generate-auth-token []
-  (jwt/generate {:email "serives@carrot.io"
-                 :user-id "51c6-43de-928a",
-                 :name "Slack Router"
-                 :refresh-url "http://localhost:3003/users/refresh"
-                 :last-name "Router"
-                 :admin []
-                 :avatar-url "/img/ML/happy_face_green.svg"
-                 :first-name "Slack"
-                 :teams []
-                 :auth-source :email
-                 } config/passphrase))
-
-(def get-post-options
+(defn get-post-options
+  [token]
   {:headers {"Content-Type" "application/vnd.open-company.entry.v1+json"
-             "Authorization" (str "Bearer " (generate-auth-token))}})
+             "Authorization" (str "Bearer " token)}})
 
 (defn storage-request-post-url
   [org section uuid]
@@ -34,9 +22,9 @@
   (str "http://localhost:3001/orgs/" org "/entries/" uuid)) 
 
 (defn get-post-data
-  [org section uuid cb]
+  [org section uuid token cb]
   (timbre/debug (storage-request-post-url org section uuid))
-  (http/get (storage-request-post-url org section uuid) get-post-options
+  (http/get (storage-request-post-url org section uuid) (get-post-options token)
     (fn [{:keys [status headers body error]}]
       (if error
         (timbre/error "Failed, exception is " error)
@@ -46,10 +34,15 @@
 
 (defn update-slack-url
   "posts back to the Slack API" 
-  [post-data]
-  (timbre/debug post-data)
-  (let [content (get post-data "body")]
-    (timbre/debug content))
+  [token channel ts url post-data]
+  (timbre/debug token channel ts url post-data)
+  (let [content (get post-data "body")
+        url-text (get url "url")]
+    (timbre/debug url-text)
+    (timbre/debug
+     (slack-lib/unfurl-post-url token channel ts url-text content)
+     )
+    )
   )
 
 (defn parse-carrot-url [url]
@@ -76,13 +69,23 @@
 (defn unfurl
   "given a url in the form {'url' <link> 'domain' <carrot.io>}
    ask if it is a post and if so query storage service for more info."
-  [link]
+  [token channel link message_ts]
   ;; split url
-  (let [parsed-link (parse-carrot-url link)]
+  (let [parsed-link (parse-carrot-url link)
+        decoded-token (jwt/decode token)
+        slack-token (:slack-token (:claims decoded-token))]
+    (timbre/debug decoded-token slack-token)
     ;; is this a post?
     (when (= "secure-uuid" (:url-type parsed-link))
       ;; ask the storage service for information
       (get-post-data (:org parsed-link)
                      (:section parsed-link)
                      (:uuid parsed-link)
-                     (fn [data] (update-slack-url data))))))
+                     token
+                     (fn [data]
+                       (update-slack-url
+                        slack-token
+                        channel
+                        message_ts
+                        link
+                        data))))))
