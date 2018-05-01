@@ -6,9 +6,6 @@
             [taoensso.timbre :as timbre]
             [cheshire.core :as json]
             [amazonica.aws.sns :as sns]
-            [schema.core :as schema]
-            [oc.lib.schema :as lib-schema]
-            [oc.lib.time :as oc-time]
             [oc.slack-router.config :as config]))
 
 ;; ----- core.async -----
@@ -17,19 +14,11 @@
 
 (defonce slack-go (atom true))
 
-;; ----- Data schema -----
-
-(def SlackEventTrigger
-  "
-  "
-  {:event-at lib-schema/ISO8601})
-
 ;; ----- Event handling -----
 
 (defn- handle-slack-message
   [trigger]
   (timbre/debug "Slack event request of:" trigger "to topic:" config/aws-sns-slack-topic-arn)
-  (schema/validate SlackEventTrigger trigger)
   (timbre/info "Sending request to topic:" config/aws-sns-slack-topic-arn)
   (sns/publish
     {:access-key config/aws-access-key-id

@@ -2,6 +2,7 @@
   (:require [com.stuartsierra.component :as component]
             [taoensso.timbre :as timbre]
             [org.httpkit.server :as httpkit]
+            [oc.slack-router.async.slack-sns :as slack-sns]
             [oc.slack-router.config :as c]))
 
 (defrecord HttpKit [options handler server]
@@ -17,6 +18,16 @@
         (server)
         (dissoc component :server)))))
 
+(defrecord SlackSNS [slack-sns]
+  component/Lifecycle
+  (start [component]
+    (timbre/info "[slack-sns] starting")
+    (slack-sns/start)
+    (assoc component :slack-sns true))
+  (stop [component]
+    (slack-sns/start)
+    (dissoc component :slack-sns)))
+
 (defrecord Handler [handler-fn]
   component/Lifecycle
   (start [component]
@@ -27,6 +38,9 @@
 
 (defn slack-router-system [{:keys [port handler-fn]}]
   (component/system-map
+   :slack-sns (component/using
+               (map->SlackSNS {})
+               [])
    :handler (component/using
              (map->Handler {:handler-fn handler-fn})
              [])
