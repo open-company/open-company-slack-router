@@ -33,11 +33,11 @@
 
 (defn storage-request-post-url
   [org section uuid]
-  (str "http://localhost:3001/orgs/" org "/entries/" uuid))
+  (str config/storage-server-url "/orgs/" org "/entries/" uuid))
 
 (defn storage-request-secure-uuid-url
   [org section uuid]
-  (str "http://localhost:3001/orgs/" org "/entries/" uuid)) 
+  (str config/storage-server-url "/orgs/" org "/entries/" uuid))
 
 (defn get-post-data
   [org section uuid token cb]

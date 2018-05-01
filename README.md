@@ -40,7 +40,7 @@ Most of the dependencies are internal, meaning [Leiningen](https://github.com/te
 
 * [Java 8](http://www.oracle.com/technetwork/java/javase/downloads/index.html) - a Java 8 JRE is needed to run Clojure
 * [Leiningen](https://github.com/technomancy/leiningen) - Clojure's build and dependency management tool
-
+* [ngrok](https://ngrok.com/) - Secure web tunnel to localhost
 
 #### Java
 
@@ -140,6 +140,11 @@ You will need to add domains to the slack app configuration.
 
 NB: Make sure when you are done testing locally, you disable the "Enable Events" toggle so Slack will stop trying
 to echo events to your local environment via ngrok.
+
+To receive events from the SNS topic with SQS, you will need to subscribe an SQS queue to the topic.
+
+In AWS go to the SQS service console. Click the SQS queue you created. From the
+'Queue Actions' menu, chose 'Subscribe Queue to SNS topic'.
 
 ## Usage
 

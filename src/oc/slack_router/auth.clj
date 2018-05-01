@@ -16,7 +16,7 @@
                  } config/passphrase))
 
 (def request-token-url
-  "http://localhost:3003/users/refresh/")
+  (str config/auth-server-url "/users/refresh/"))
 
 (defn get-options
   [token]
