@@ -42,7 +42,9 @@
     [clj-http "3.8.0"]
     ;; Not used directly, dependency of oc.lib and org.julienxx/clj-slack https://github.com/clojure/data.json
     [org.clojure/data.json "0.2.6"]
-    
+
+    ;; Clojure wrapper for jsoup HTML parser https://github.com/mfornos/clojure-soup
+    [clj-soup/clojure-soup "0.1.3"]
     ;; Library for OC projects https://github.com/open-company/open-company-lib
     ;; NB: clj-http pulled in manually
     ;; NB: org.clojure/data.json pulled in manually
