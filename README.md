@@ -29,7 +29,7 @@ To get started, head to: [Carrot](https://carrot.io/)
 
 ## Overview
 
-The OpenCompany Slack Router service handles incoming events from the Slack API. It will then route or query our other services to handle the incoming event.
+The OpenCompany Slack Router service handles incoming events from the Slack API. It will then post these messages to an Amazon SNS topic so that other services can take action. It also handles the url unfurl requests.
 
 
 ## Local Setup
