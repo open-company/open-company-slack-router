@@ -1,8 +1,6 @@
 (ns oc.slack-router.auth
   "Uses a magic token to get a valid user token from the auth service"
   (:require [org.httpkit.client :as http]
-            [cheshire.core :as json]
-            [taoensso.timbre :as timbre]
             [oc.lib.jwt :as jwt]
             [oc.slack-router.config :as config]))
 
@@ -24,5 +22,4 @@
              "Authorization" (str "Bearer " token)}})
 
 (defn user-token [slack-user slack-team-id]
-  (timbre/debug (magic-token slack-user slack-team-id))
   (:body @(http/get request-token-url (get-options (magic-token slack-user slack-team-id)))))

@@ -2,7 +2,6 @@
   "Liberator API for Slack callback to slack router service."
   (:require [taoensso.timbre :as timbre]
             [compojure.core :as compojure :refer (defroutes GET OPTIONS POST)]
-            [ring.util.response :as response]
             [liberator.core :refer (defresource by-method)]
             [cheshire.core :as json]
             [oc.lib.api.common :as api-common]
@@ -46,17 +45,18 @@
   [request]
   (let [body (:body request)
         type (get body "type")]
-    (timbre/debug body type)
+
     (cond
      ;; This is a check of the web hook by Slack, echo back the challenge
      (= type "url_verification")
      (let [challenge (get body "challenge")]
        (timbre/info "Slack challenge:" challenge)
        {:type type :challenge challenge}) ; Slack, we're good
-     
+
      (= type "event_callback")
      (let [event (get body "event")
            event-type (get event "type")]
+
        (cond
         (= event-type "link_shared")
         ;; Handle the unfurl request
