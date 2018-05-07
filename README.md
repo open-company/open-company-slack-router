@@ -90,7 +90,7 @@ Make sure you update the `CHANGE-ME` items in the section of the `project.clj` t
     :open-company-slack-client-secret "CHANGE-ME"
     :aws-access-key-id "CHANGE-ME"
     :aws-secret-access-key "CHANGE-ME"
-    :aws-sns-slack-topic-arn "CHANGE-ME" ; SNS topic to publish notifications (optional)
+    :aws-sns-slack-topic-arn "CHANGE-ME" ; SNS topic to publish notifications
     :log-level "debug"
   }
 ```
