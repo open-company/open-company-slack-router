@@ -100,7 +100,7 @@
            [true, {:body body :challenge challenge}]))))
     })
   ;; Responses
-  :post! (fn [ctx] (slack-event-handler ctx))
+  :post! slack-event-handler
   
   :handle-created (fn [ctx]
     (timbre/debug "OK" (:type ctx) (:challenge ctx))

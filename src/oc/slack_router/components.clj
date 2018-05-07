@@ -2,8 +2,7 @@
   (:require [com.stuartsierra.component :as component]
             [taoensso.timbre :as timbre]
             [org.httpkit.server :as httpkit]
-            [oc.slack-router.async.slack-sns :as slack-sns]
-            [oc.slack-router.config :as c]))
+            [oc.slack-router.async.slack-sns :as slack-sns]))
 
 (defrecord HttpKit [options handler server]
   component/Lifecycle
