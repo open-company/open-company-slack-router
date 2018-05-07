@@ -90,7 +90,7 @@ Make sure you update the `CHANGE-ME` items in the section of the `project.clj` t
     :open-company-slack-client-secret "CHANGE-ME"
     :aws-access-key-id "CHANGE-ME"
     :aws-secret-access-key "CHANGE-ME"
-    :aws-sns-slack-topic-arn "" ; SNS topic to publish notifications (optional)
+    :aws-sns-slack-topic-arn "CHANGE-ME" ; SNS topic to publish notifications (optional)
     :log-level "debug"
   }
 ```
@@ -194,7 +194,6 @@ The Slack Router service current has two responsibilities:
 
 - Process unfurl requests
 - Post Slack message events to an SNS topic.
-
 
 
 ## Participation
