@@ -90,7 +90,7 @@ Make sure you update the `CHANGE-ME` items in the section of the `project.clj` t
     :open-company-slack-client-secret "CHANGE-ME"
     :aws-access-key-id "CHANGE-ME"
     :aws-secret-access-key "CHANGE-ME"
-    :aws-sns-slack-topic-arn "" ; SNS topic to publish notifications (optional)
+    :aws-sns-slack-topic-arn "CHANGE-ME" ; SNS topic to publish notifications
     :log-level "debug"
   }
 ```
@@ -125,8 +125,8 @@ To configure the Slack to use the ngrok tunnel as the destination of link_shared
 
 Click the "Event Subscriptions" navigation in the menu. Click the toggle on.
 
-Add the URL provided by ngrok above, modifying `http` to `https` and with a `/slack/unfurl` suffix,
-e.g. `https://6ae20d9b.ngrok.io/slack/unfurl`
+Add the URL provided by ngrok above, modifying `http` to `https` and with a `/slack-event` suffix,
+e.g. `https://6ae20d9b.ngrok.io/slack-event`
 
  Click the "Add Team Event" button and add the `link_shared` event. Click the "Add Bot User Event" button and
  add the `link_shared` event.
@@ -194,7 +194,6 @@ The Slack Router service current has two responsibilities:
 
 - Process unfurl requests
 - Post Slack message events to an SNS topic.
-
 
 
 ## Participation
