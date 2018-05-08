@@ -171,7 +171,7 @@
 
   :aliases{
     "build" ["do" "clean," "deps," "compile"] ; clean and build code
-    "start" ["do" "migrate-db," "run" "-m" "oc.slack-router.app"] ; start a development server
+    "start" ["do" "run" "-m" "oc.slack-router.app"] ; start a development server
     "start!" ["with-profile" "prod" "do" "start"] ; start a server in production
     "midje!" ["with-profile" "qa" "midje"] ; run all tests
     "test!" ["with-profile" "qa" "do" "clean," "build," "midje"] ; build, init the DB and run all tests
