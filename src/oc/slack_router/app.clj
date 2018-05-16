@@ -48,6 +48,11 @@
     "Running on port: " port "\n"
     "Trace: " c/liberator-trace "\n"
     "Hot-reload: " c/hot-reload "\n"
+    "Slack client ID: " c/slack-client-id "\n"
+    "Auth Service: " c/auth-server-url "\n"
+    "Storage Service: " c/storage-server-url "\n"
+    "UI Server: " c/ui-server-url "\n"
+    "SNS Topic ARN: " c/aws-sns-slack-topic-arn "\n"
     "Sentry: " c/dsn "\n\n"
     (when c/intro? "Ready to serve...\n"))))
 

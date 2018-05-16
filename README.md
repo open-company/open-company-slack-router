@@ -29,7 +29,9 @@ To get started, head to: [Carrot](https://carrot.io/)
 
 ## Overview
 
-The OpenCompany Slack Router service handles incoming events from the Slack API. It will then post these messages to an Amazon SNS topic so that other services can take action. It also handles the url unfurl requests.
+The OpenCompany Slack Router service handles incoming events from the Slack API. It will then post these messages to an Amazon SNS topic so that other services can take action.
+
+In addition, the Slack Router also handles the Carrot URL unfurl requests from Slack.
 
 
 ## Local Setup
@@ -118,28 +120,31 @@ First start the Slack Router Service (see below), and start the ngrok tunnel:
 ngrok http 3009
 ```
 
-Note the URL ngrok provides. It will look like: `http://6ae20d9b.ngrok.io` -> localhost:3009
+Note the HTTPS URL ngrok provides. It will look like: `https://6ae20d9b.ngrok.io` -> localhost:3009
 
 To configure the Slack to use the ngrok tunnel as the destination of link_shared events. Go to
 [Your Apps](https://api.slack.com/apps) and click the "Carrot (Local Development)" app.
 
-Click the "Event Subscriptions" navigation in the menu. Click the toggle on.
+Click the "Event Subscriptions" navigation item in the menu. Click the toggle on.
 
-Add the URL provided by ngrok above, modifying `http` to `https` and with a `/slack-event` suffix,
+Add the URL provided by ngrok above, modifying with a `/slack-event` suffix,
 e.g. `https://6ae20d9b.ngrok.io/slack-event`
 
- Click the "Add Team Event" button and add the `link_shared` event. Click the "Add Bot User Event" button and
- add the `link_shared` event.
+- Click the "Add Team Event" button and add the `link_shared` event.
+- Click the "Add Bot User Event" button and add the `link_shared` event.
+- Click the "Add Team Event" button and add the `messages.channels` event.
+- Click the "Add Bot User Event" button and add the `message.channels` event. - Click the "Add Bot User Event" button and add the `message.im` event.
 
 Click the "Save Changes" button.
 
-You will need to add domains to the slack app configuration.
-`localhost` for local dev
-`staging.carrot.io` for staging
-`beta.carrot.io` for beta
+You will need to add domains to the slack app configuration comensurate with where you are setting this up for. E.g.
 
-NB: Make sure when you are done testing locally, you disable the "Enable Events" toggle so Slack will stop trying
-to echo events to your local environment via ngrok.
+- `localhost` for local dev
+- `staging.<your-domain>` for staging
+- `beta.<your-domain>` for beta
+- `<your-domain>` for production
+
+NB: Make sure when you are done testing locally, you disable the "Enable Events" toggle so Slack will stop trying to echo events to your local environment via ngrok.
 
 To receive events from the SNS topic with SQS, you will need to subscribe an SQS queue to the topic.
 

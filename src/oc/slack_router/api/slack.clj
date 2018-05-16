@@ -104,7 +104,7 @@
   :post! slack-event-handler
   
   :handle-created (fn [ctx]
-    (timbre/debug "OK" (:type ctx) (:challenge ctx))
+    (timbre/debug "OK" (or (:type ctx) "") (or (:challenge ctx) ""))
     (when (= (:type ctx) "url_verification")
       (json/generate-string (:challenge ctx)))))
 
