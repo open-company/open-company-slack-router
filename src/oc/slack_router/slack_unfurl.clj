@@ -167,7 +167,6 @@
    Also see open-company-lib for slack unfurl function.
   "
   [token channel ts url data]
-  (timbre/debug "RETUNED DATA: " data)
   (when data
     (let [url-data (cond
 
@@ -277,4 +276,4 @@
                      channel
                      message_ts
                      link
-                     data)))))))
+                     (assoc data "board-slug" (:section parsed-link)))))))))

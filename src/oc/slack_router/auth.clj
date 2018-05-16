@@ -22,4 +22,8 @@
              "Authorization" (str "Bearer " token)}})
 
 (defn user-token [slack-user slack-team-id]
-  (:body @(http/get request-token-url (get-options (magic-token slack-user slack-team-id)))))
+  (let [token-request
+        @(http/get request-token-url
+                   (get-options (magic-token slack-user slack-team-id)))]
+    (when (= 201 (:status token-request))
+      (:body token-request))))
