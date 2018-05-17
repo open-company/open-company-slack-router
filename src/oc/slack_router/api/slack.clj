@@ -64,8 +64,9 @@
         (let [slack-users (get body "authed_users")
               slack-team-id (get body "team_id")]
           (doseq [slack-user slack-users]
-              (let [user-token (auth/user-token slack-user slack-team-id)]
-                (render-slack-unfurl user-token body))))
+            (let [user-token (auth/user-token slack-user slack-team-id)]
+              (when user-token
+                (render-slack-unfurl user-token body)))))
         :default
         (slack-sns/send-trigger! body)))
      :default
@@ -103,7 +104,7 @@
   :post! slack-event-handler
   
   :handle-created (fn [ctx]
-    (timbre/debug "OK" (:type ctx) (:challenge ctx))
+    (timbre/debug "OK" (or (:type ctx) "") (or (:challenge ctx) ""))
     (when (= (:type ctx) "url_verification")
       (json/generate-string (:challenge ctx)))))
 

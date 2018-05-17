@@ -15,7 +15,7 @@
     ;; Lisp on the JVM http://clojure.org/documentation
     [org.clojure/clojure "1.9.0"]
     ;; Command-line parsing https://github.com/clojure/tools.cli
-    [org.clojure/tools.cli "0.3.5"]
+    [org.clojure/tools.cli "0.3.7"]
     [http-kit "2.3.0-beta2"] ; Web client/server http://http-kit.org/
     ;; Web application library https://github.com/ring-clojure/ring
     [ring/ring-devel "1.6.3"]
@@ -31,15 +31,15 @@
     ;; NB: com.taoensso/timbre pulled in by oc.lib
     [ring-logger-timbre "0.7.6" :exclusions [com.taoensso/encore com.taoensso/timbre]] 
     ;; Web routing https://github.com/weavejester/compojure
-    [compojure "1.6.0"]
+    [compojure "1.6.1"]
     ;; Clojure Slack REST API https://github.com/julienXX/clj-slack
     ;; NB: clj-http pulled in manually
     ;; NB: org.clojure/data.json pulled in manually
     [org.julienxx/clj-slack "0.5.6" :exclusions [clj-http org.clojure/data.json]]
     ;; Pretty-print clj and EDN https://github.com/kkinnear/zprint
-    [zprint "0.4.7"]
+    [zprint "0.4.9"]
     ;; Not used directly, dependency of oc.lib and org.julienxx/clj-slack https://github.com/dakrone/clj-http
-    [clj-http "3.8.0"]
+    [clj-http "3.9.0"]
     ;; Not used directly, dependency of oc.lib and org.julienxx/clj-slack https://github.com/clojure/data.json
     [org.clojure/data.json "0.2.6"]
 
@@ -90,7 +90,7 @@
         ;; Example-based testing https://github.com/marick/lein-midje
         [lein-midje "3.2.1"]
         ;; Linter https://github.com/jonase/eastwood
-        [jonase/eastwood "0.2.6-beta2"]
+        [jonase/eastwood "0.2.6"]
         ;; Static code search for non-idiomatic code https://github.com/jonase/kibit
         ;; NB: rewrite-clj is pulled in manually
         ;; NB: org.clojure/tools.reader pulled in manually
@@ -132,7 +132,7 @@
         ;; Pretty-print clj and EDN https://github.com/kkinnear/lein-zprint
         ;; NB: rewrite-clj is pulled in manually
         ;; NB: rewrite-cljs not needed
-        [lein-zprint "0.3.8" :exclusions [org.clojure/clojure rewrite-clj rewrite-cljs]]
+        [lein-zprint "0.3.9" :exclusions [org.clojure/clojure rewrite-clj rewrite-cljs]]
       ]
     }]
 
