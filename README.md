@@ -6,9 +6,9 @@
 
 ## Background
 
-> I've come to learn there is a virtuous cycle to transparency and a very vicious cycle of obfuscation.
+> I think the currency of leadership is transparency. You've got to be truthful. I don't think you should be vulnerable every day, but there are moments where you've got to share your soul and conscience with people and show them who you are, and not be afraid of it.
 
-> -- [Jeff Weiner](https://www.linkedin.com/in/jeffweiner08)
+> -- Howard Schultz
 
 Companies struggle to keep everyone on the same page. People are hyper-connected in the moment but still don’t know what’s happening across the company. Employees and investors, co-founders and execs, customers and community, they all want more transparency. The solution is surprisingly simple and effective - great company updates that build transparency and alignment.
 
@@ -77,7 +77,7 @@ A secret is shared between the [Slack Router service](https://github.com/open-co
 
 A [Slack App](https://api.slack.com/apps) needs to be created for OAuth authentication and events. For local development, create a Slack app with a Redirect URI of `http://localhost:3003/slack-oauth` and get the client ID and secret from the Slack app you create.  From the /apps url you will be able to chose 'Event Subscriptions' and then turn on the 'Enable Events' toggle.  Once this is turned on the router will begin receiving events from Slack.
 
-An [AWS SNS](https://aws.amazon.com/sns/) pub/sub topic is used to push slack events to interested listeners. To take advantage of this capability, configure the `aws-sns-slack-topic-arn` with the ARN (Amazon Resource Name) of the SNS topic you setup in AWS.
+An [AWS SNS](https://aws.amazon.com/sns/) pub/sub topic is used to push slack events to interested listeners, such as the OpenCompany Interaction Service. To take advantage of this capability, configure the `aws-sns-slack-topic-arn` with the ARN (Amazon Resource Name) of the SNS topic you setup in AWS.
 
 Make sure you update the `CHANGE-ME` items in the section of the `project.clj` that looks like this to contain your actual JWT, Slack, and AWS secrets:
 
