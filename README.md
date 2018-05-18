@@ -36,7 +36,7 @@ In addition, the Slack Router also handles the Carrot URL unfurl requests from S
 
 ## Local Setup
 
-Prospective users of [Carrot](https://carrot.io/) should get started by going to [Carrot.io](https://carrot.io/). The following local setup is **for developers** wanting to work on the OpenCompany Slack Router Service.
+Prospective users of [Carrot](https://carrot.io/) should get started by going to [Carrot.io](https://carrot.io/). The following local setup is **for developers** wanting to work on the OpenCompany Slack Router service.
 
 Most of the dependencies are internal, meaning [Leiningen](https://github.com/technomancy/leiningen) will handle getting them for you. There are a few exceptions:
 
@@ -73,11 +73,11 @@ lein deps
 
 #### Required Secrets
 
-A secret is shared between the [Slack Router service](https://github.com/open-company/open-company-slack-router) and the Auth service for creating and validating [JSON Web Tokens](https://jwt.io/).
+A secret is shared between the Slack Router service and the [Authentication service](https://github.com/open-company/open-company-auth) for creating and validating [JSON Web Tokens](https://jwt.io/).
 
 A [Slack App](https://api.slack.com/apps) needs to be created for OAuth authentication and events. For local development, create a Slack app with a Redirect URI of `http://localhost:3003/slack-oauth` and get the client ID and secret from the Slack app you create.  From the /apps url you will be able to chose 'Event Subscriptions' and then turn on the 'Enable Events' toggle.  Once this is turned on the router will begin receiving events from Slack.
 
-An [AWS SNS](https://aws.amazon.com/sns/) pub/sub topic is used to push slack events to interested listeners, such as the OpenCompany Interaction Service. To take advantage of this capability, configure the `aws-sns-slack-topic-arn` with the ARN (Amazon Resource Name) of the SNS topic you setup in AWS.
+An [AWS SNS](https://aws.amazon.com/sns/) pub/sub topic is used to push slack events to interested listeners, such as the OpenCompany Interaction service. To take advantage of this capability, configure the `aws-sns-slack-topic-arn` with the ARN (Amazon Resource Name) of the SNS topic you setup in AWS.
 
 Make sure you update the `CHANGE-ME` items in the section of the `project.clj` that looks like this to contain your actual JWT, Slack, and AWS secrets:
 
@@ -114,7 +114,7 @@ ngrok is trivial to setup:
 
 To use the webhook from Slack with local development, you need to run ngrok, then configure your Slack integration.
 
-First start the Slack Router Service (see below), and start the ngrok tunnel:
+First start the Slack Router service (see below), and start the ngrok tunnel:
 
 ```console
 ngrok http 3009
@@ -153,7 +153,7 @@ In AWS go to the SQS service console. Click the SQS queue you created. From the
 
 ## Usage
 
-Prospective users of [Carrot](https://carrot.io/) should get started by going to [Carrot.io](https://carrot.io/). The following usage is **for developers** wanting to work on the OpenCompany Slack Router Service.
+Prospective users of [Carrot](https://carrot.io/) should get started by going to [Carrot.io](https://carrot.io/). The following usage is **for developers** wanting to work on the OpenCompany Slack Router service.
 
 **Make sure you've updated `project.clj` as described above.**
 
