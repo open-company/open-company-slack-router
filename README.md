@@ -90,6 +90,7 @@ Make sure you update the `CHANGE-ME` items in the section of the `project.clj` t
     :hot-reload "true" ; reload code when changed on the file system
     :open-company-slack-client-id "CHANGE-ME"
     :open-company-slack-client-secret "CHANGE-ME"
+    :open-company-slack-verification-token "CHANGE-ME" ;; Found in the slack app configuration.
     :aws-access-key-id "CHANGE-ME"
     :aws-secret-access-key "CHANGE-ME"
     :aws-sns-slack-topic-arn "CHANGE-ME" ; SNS topic to publish notifications
