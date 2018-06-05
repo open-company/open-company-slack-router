@@ -255,25 +255,46 @@
                      nil)]
 
     (when request-url
-      (if (= "section" url-type)
-        (get-data (storage-request-org-url (:org parsed-link))
+      (cond
+       (= "org" url-type)
+       (get-data request-url
+                 token
+                 (fn [data]
+                   (update-slack-url
+                    slack-token
+                    channel
+                    message_ts
+                    link
+                    data)))
+       (= "section" url-type)
+       (get-data (storage-request-org-url (:org parsed-link))
+                 token
+                 (fn [org-data]
+                   (get-data request-url
+                             token
+                             (fn [data]
+                               (when-not (= "private" (get data "access"))
+                                 (update-slack-url
+                                  slack-token
+                                  channel
+                                  message_ts
+                                  link
+                                  (assoc data :org-data org-data)))))))
+        :default
+        (get-data (storage-request-section-url (:org parsed-link)
+                                               (:section parsed-link))
                   token
-                  (fn [org-data]
-                    (get-data request-url
-                              token
-                              (fn [data]
-                                (update-slack-url
-                                 slack-token
-                                 channel
-                                 message_ts
-                                 link
-                                 (assoc data :org-data org-data))))))
-        (get-data request-url
-                  token
-                  (fn [data]
-                    (update-slack-url
-                     slack-token
-                     channel
-                     message_ts
-                     link
-                     (assoc data "board-slug" (:section parsed-link)))))))))
+                  (fn [section-data]
+                    (when-not (= "private" (get section-data "access"))
+                      (get-data request-url
+                                token
+                                (fn [data]
+                                  (timbre/debug data)
+                                  (update-slack-url
+                                   slack-token
+                                   channel
+                                   message_ts
+                                   link
+                                   (assoc data
+                                     "board-slug"
+                                     (:section parsed-link))))))))))))
