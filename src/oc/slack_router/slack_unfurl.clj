@@ -126,6 +126,10 @@
 (defn post-unfurl-data
   [url post-data]
   (let [content (.text (soup/parse (get post-data "body")))
+        reduced-content (clojure.string/join " " ;; split into words
+                           (filter not-empty
+                             (take 20 ;; 20 words is the average long sentence
+                               (clojure.string/split content #" "))))
         title (.text (soup/parse (get post-data "headline")))
         board-slug (get post-data "board-slug")
         author (get (get post-data "publisher") "name")
@@ -155,7 +159,7 @@
                    :author_icon org-logo
                    :title title
                    :title_link url-text
-                   :text content
+                   :text reduced-content
                    :footer footer
                    :attachment_type "default"
                    :color "good" ;; this can be a hex color
