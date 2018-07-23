@@ -159,7 +159,9 @@
                    :author_icon org-logo
                    :title title
                    :title_link url-text
-                   :text reduced-content
+                   :text (if (< (count reduced-content) (count content))
+                              (str reduced-content " ...")
+                              content)
                    :footer footer
                    :attachment_type "default"
                    :color "good" ;; this can be a hex color
