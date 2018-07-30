@@ -13,7 +13,7 @@
 
   :dependencies [
     ;; Lisp on the JVM http://clojure.org/documentation
-    [org.clojure/clojure "1.9.0"]
+    [org.clojure/clojure "1.10.0-alpha6"]
     ;; Command-line parsing https://github.com/clojure/tools.cli
     [org.clojure/tools.cli "0.3.7"]
     [http-kit "2.3.0"] ; Web client/server http://http-kit.org/
@@ -37,7 +37,7 @@
     ;; NB: org.clojure/data.json pulled in manually
     [org.julienxx/clj-slack "0.5.6" :exclusions [clj-http org.clojure/data.json]]
     ;; Pretty-print clj and EDN https://github.com/kkinnear/zprint
-    [zprint "0.4.9"]
+    [zprint "0.4.10"]
     ;; Not used directly, dependency of oc.lib and org.julienxx/clj-slack https://github.com/dakrone/clj-http
     [clj-http "3.9.0"]
     ;; Not used directly, dependency of oc.lib and org.julienxx/clj-slack https://github.com/clojure/data.json
@@ -132,7 +132,7 @@
         ;; Pretty-print clj and EDN https://github.com/kkinnear/lein-zprint
         ;; NB: rewrite-clj is pulled in manually
         ;; NB: rewrite-cljs not needed
-        [lein-zprint "0.3.9" :exclusions [org.clojure/clojure rewrite-clj rewrite-cljs]]
+        [lein-zprint "0.3.10" :exclusions [org.clojure/clojure rewrite-clj rewrite-cljs]]
       ]
     }]
 
