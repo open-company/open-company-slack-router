@@ -1,6 +1,7 @@
 (ns oc.slack-router.api.slack
   "Liberator API for Slack callback to slack router service."
-  (:require [taoensso.timbre :as timbre]
+  (:require [if-let.core :refer (if-let*)]
+            [taoensso.timbre :as timbre]
             [compojure.core :as compojure :refer (defroutes GET OPTIONS POST)]
             [liberator.core :refer (defresource by-method)]
             [cheshire.core :as json]
@@ -20,12 +21,64 @@
       (slack-unfurl/unfurl token channel link message_ts))
     {:status 200 :body (json/generate-string {})}))
 
+(defn- slack-action-handler
+  "
+  Handle an action event from Slack.
+
+  The idea here is to do very minimal processing and get a 200 back to Slack as fast as possible as this is a 'fire hose'
+  of requests. So minimal logging and minimal handling of the request.
+  
+  Message events look like:
+  
+  { 
+    'message' {
+      'type' 'message',
+      'user' 'U06SBTXJR',
+      'text' 'test it',
+      'client_msg_id' 'f027da72-2800-47ac-93b5-b0208652540e',
+      'ts' '1538877805.000100'
+    },
+    'token' 'aLbD1VFXN31DEgpFIvxu32JV',
+    'trigger_id' '450676967892.6895731204.3b1d077d82901bb21e3d18e62d20d594',
+    'message_ts' '1538877805.000100',
+    'user' {
+      'idea' 'U06SBTXJR',
+      'name' 'sean'
+    },
+    'action_ts' '1538878700.800208',
+    'callback_id' 'post',
+    'type' 'message_action',
+    'response_url' 'https://hooks.slack.com/app/T06SBMH60/452213600886/6BquVZR07zzRqblaB35yYxgC',
+    'channel' {
+      'id' 'C10A1P4H2',
+      'name' 'bot-testing'
+    },
+    'team' {
+      'id' 'T06SBMH60',
+      'domain' 'opencompanyhq'
+    }
+  }
+  "
+  [request]
+  (if-let* [payload-str (get (-> request :request :params) "payload")
+            payload (json/parse-string payload-str)
+            callback-id (get payload "callback_id")
+            type (get payload "type")]
+    (if (and (= callback-id "post") (= type "message_action"))
+      (timbre/info "DO IT...")
+      (timbre/warn "Unknown Slack action:" type callback-id))
+    (timbre/error "No proper payload in Slack action."))
+  {:status 200})
+
 (defn- slack-event-handler
   "
   Handle a message event from Slack.
-  Idea here is to do very minimal processing and get a 200 back to Slack as fast as possible as this is a 'fire hose'
+  
+  The idea here is to do very minimal processing and get a 200 back to Slack as fast as possible as this is a 'fire hose'
   of requests. So minimal logging and minimal handling of the request.
+  
   Message events look like:
+
   {'token' 'IxT9ZaxvjqRdKxYtWdTw21Xv',
    'team_id' 'T06SBMH60', 
    'api_app_id' 'A0CHN2UDB',
@@ -73,6 +126,7 @@
      {:status 200})))
 
 ;; ----- Resources - see: http://clojure-liberator.github.io/liberator/assets/img/decision-graph.svg
+
 (defresource slack-event [params]
   (api-common/anonymous-resource config/passphrase)
 
@@ -108,10 +162,27 @@
     (when (= (:type ctx) "url_verification")
       (json/generate-string (:challenge ctx)))))
 
+(defresource slack-action [params]
+  (api-common/anonymous-resource config/passphrase)
+
+  :allowed-methods [:options :post]
+
+  :authorized? true
+  :allowed? true
+
+  ;; Media type client accepts
+  :available-media-types ["application/json"]
+  :handle-not-acceptable (fn [_] (api-common/only-accept 406 "application/json"))
+
+  ;; Responses
+  :post! slack-action-handler)
+
 ;; ----- Routes -----
 
 (defn routes [sys]
   (compojure/routes
    (OPTIONS "/slack-event" {params :params} (slack-event params))
    (POST "/slack-event" [:as request] (slack-event request))
-   (GET "/slack-event" {params :params} (slack-event params))))
+   (GET "/slack-event" {params :params} (slack-event params))
+   (OPTIONS "/slack-action" [:as request] (slack-action request))
+   (POST "/slack-action" [:as request] (slack-action request))))
