@@ -9,6 +9,7 @@
             [oc.slack-router.auth :as auth]
             [oc.slack-router.slack-unfurl :as slack-unfurl]
             [oc.slack-router.async.slack-sns :as slack-sns]
+            [oc.slack-router.async.slack-action :as slack-action]
             [oc.slack-router.config :as config]))
 
 (defn render-slack-unfurl [token body]
@@ -23,6 +24,8 @@
 
 (defn- slack-action-handler
   "
+  https://api.slack.com/actions
+  
   Handle an action event from Slack.
 
   The idea here is to do very minimal processing and get a 200 back to Slack as fast as possible as this is a 'fire hose'
@@ -65,7 +68,7 @@
             callback-id (get payload "callback_id")
             type (get payload "type")]
     (if (and (= callback-id "post") (= type "message_action"))
-      (timbre/info "DO IT...")
+      (slack-action/send-payload! payload)
       (timbre/warn "Unknown Slack action:" type callback-id))
     (timbre/error "No proper payload in Slack action."))
   {:status 200})
