@@ -129,7 +129,7 @@
         }
         result (http/post "https://slack.com/api/dialog.open" {
                   :headers {"Content-type" "application/json"
-                            "Authorization" "Bearer xoxb-231526768580-Zi28hnBikr7fu8Rm301KN84t"}
+                            "Authorization" "Bearer xoxb-231526768580-YA8EUoQ1tkEYrHpXZDcudC5A"} ; temp
                   :body (json/encode body)})]
     (timbre/info result)))
   
