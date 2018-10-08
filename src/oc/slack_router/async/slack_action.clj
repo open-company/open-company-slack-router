@@ -4,7 +4,9 @@
   "
   (:require [clojure.core.async :as async :refer (<! >!!)]
             [clojure.walk :refer (keywordize-keys)]
-            [taoensso.timbre :as timbre]))
+            [taoensso.timbre :as timbre]
+            [clj-http.client :as http]
+            [cheshire.core :as json]))
 
 ;; ----- core.async -----
 
@@ -18,7 +20,7 @@
   [payload-strings]
   "
   https://api.slack.com/actions
-  
+
   We have 3s max to respond to the action with a dialog request.
 
   Message events look like:
@@ -52,16 +54,84 @@
     }
   }
   "
-  (timbre/debug "Slack request of:" payload)
+  (timbre/debug "Slack request of:" payload-strings)
   (let [payload (keywordize-keys payload-strings)
         response-url (:response_url payload)
         trigger (:trigger_id payload)
         team (:team payload)
         channel (:channel payload)
         user (:user payload)
-        message (:message payload)]
-    )
-  )
+        message (:message payload)
+        body {
+          :trigger_id trigger
+          :dialog {
+            :title "Post to Carrot"
+            :submit_label "Post"
+            :callback_id "foo"
+            :state "bar"
+            :elements [
+              {
+                :type "select"
+                :label "Create a draft or post?"
+                :name "status"
+                :value "draft"
+                :options [
+                  {
+                    :label "Draft"
+                    :value "draft"
+                  }
+                  {
+                    :label "Post"
+                    :value "post"
+                  }
+                ]
+              }                {
+                :type "select"
+                :label "Choose a section..."
+                :name "section"
+                :value "all-hands"
+                :options [
+                  {
+                    :label "All-hands"
+                    :value "all-hands"
+                  }
+                  {
+                    :label "Decisions"
+                    :value "decisions"
+                  }
+                  {
+                    :label "General"
+                    :value "general"
+                  }
+                  {
+                    :label "Week in Review"
+                    :value "week-in-review"
+                  }
+                ]
+              }
+              {
+                :type "text"
+                :label "Title"
+                :name "title"
+                :hint "A title for your Carrot post"
+                :optional false
+              }
+              {
+                :type "textarea"
+                :label "Body"
+                :name "body"
+                :hint "The message to save to Carrot. Edit as needed!"
+                :value (:text message)
+                :optional false
+              }
+            ]
+          }
+        }
+        result (http/post "https://slack.com/api/dialog.open" {
+                  :headers {"Content-type" "application/json"
+                            "Authorization" "Bearer xoxb-231526768580-Zi28hnBikr7fu8Rm301KN84t"}
+                  :body (json/encode body)})]
+    (timbre/info result)))
   
 ;; ----- Event loop -----
 
