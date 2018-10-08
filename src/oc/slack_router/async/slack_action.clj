@@ -62,6 +62,7 @@
         channel (:channel payload)
         user (:user payload)
         message (:message payload)
+        bot-token "xoxb-231526768580-T8Lj6RYcGQ9p8BObsx9VDiVd" ; temp
         body {
           :trigger_id trigger
           :dialog {
@@ -129,9 +130,9 @@
         }
         result (http/post "https://slack.com/api/dialog.open" {
                   :headers {"Content-type" "application/json"
-                            "Authorization" "Bearer xoxb-231526768580-YA8EUoQ1tkEYrHpXZDcudC5A"} ; temp
+                            "Authorization" (str "Bearer " bot-token)}
                   :body (json/encode body)})]
-    (timbre/info result)))
+    (timbre/info "Result with" bot-token ":" result)))
   
 ;; ----- Event loop -----
 
