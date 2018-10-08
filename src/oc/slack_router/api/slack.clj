@@ -9,7 +9,6 @@
             [oc.slack-router.auth :as auth]
             [oc.slack-router.slack-unfurl :as slack-unfurl]
             [oc.slack-router.async.slack-sns :as slack-sns]
-            [oc.slack-router.async.slack-action :as slack-action]
             [oc.slack-router.config :as config]))
 
 (defn render-slack-unfurl [token body]
@@ -63,12 +62,11 @@
   }
   "
   [request]
-  (if-let* [payload-str (get (-> request :request :params) "payload")
-            payload (json/parse-string payload-str)
+  (if-let* [payload (:payload request)
             callback-id (get payload "callback_id")
             type (get payload "type")]
     (if (and (= callback-id "post") (= type "message_action"))
-      (slack-action/send-payload! payload)
+      (slack-sns/send-trigger! payload)
       (timbre/warn "Unknown Slack action:" type callback-id))
     (timbre/error "No proper payload in Slack action."))
   {:status 200})
@@ -82,21 +80,25 @@
   
   Message events look like:
 
-  {'token' 'IxT9ZaxvjqRdKxYtWdTw21Xv',
-   'team_id' 'T06SBMH60', 
-   'api_app_id' 'A0CHN2UDB',
-   'event' {'type' 'message',
-            'user' 'U06SBTXJR',
-            'text' 'Call me back here',
-            'thread_ts' '1494262410.072574', 
-            'parent_user_id' 'U06SBTXJR', 
-            'ts' '1494281750.011785', 
-            'channel' 'C10A1P4H2', 
-            'event_ts' '1494281750.011785'}, 
+  {
+    'token' 'IxT9ZaxvjqRdKxYtWdTw21Xv',
+    'team_id' 'T06SBMH60', 
+    'api_app_id' 'A0CHN2UDB',
+    'event' {
+      'type' 'message',
+      'user' 'U06SBTXJR',
+      'text' 'Call me back here',
+      'thread_ts' '1494262410.072574', 
+      'parent_user_id' 'U06SBTXJR', 
+      'ts' '1494281750.011785', 
+      'channel' 'C10A1P4H2', 
+      'event_ts' '1494281750.011785'
+    }, 
     'type' 'event_callback', 
     'authed_users' ['U06SBTXJR'], 
     'event_id' 'Ev5B8YSYQ6', 
-    'event_time' 1494281750}
+    'event_time' 1494281750
+  }
   "
   [request]
   (let [body (:body request)
@@ -140,7 +142,8 @@
   ;; Media type client accepts
   :available-media-types ["application/json"]
   :handle-not-acceptable (fn [_] (api-common/only-accept 406 "application/json"))
-  ;; Authorization
+
+  ;; Slack authorization
   :allowed? (by-method {
     :options (fn [ctx] (api-common/allow-anonymous ctx))
     :get (fn [ctx] (api-common/allow-anonymous ctx))
@@ -155,8 +158,8 @@
            (do
              (timbre/warn "Slack verification token mismatch, request provided:" token)
              [false, {:reason "Slack verification token mismatch."}])
-           [true, {:body body :challenge challenge}]))))
-    })
+           [true, {:body body :challenge challenge}]))))})
+
   ;; Responses
   :post! slack-event-handler
   
@@ -171,7 +174,22 @@
   :allowed-methods [:options :post]
 
   :authorized? true
-  :allowed? true
+
+  ;; Slack authorization
+  :allowed? (by-method {
+    :options (fn [ctx] (api-common/allow-anonymous ctx))
+    :post (fn [ctx]
+      (dosync
+       (let [payload-str (get (-> ctx :request :params) "payload")
+             payload (json/parse-string payload-str)
+             token (get payload "token")]
+         ;; Token check
+         (if-not (= token config/slack-verification-token)
+           ;; Eghads! It might be a Slack impersonator!
+           (do
+             (timbre/warn "Slack verification token mismatch, request provided:" token)
+             [false, {:reason "Slack verification token mismatch."}])
+           [true, {:payload payload}]))))})
 
   ;; Media type client accepts
   :available-media-types ["application/json"]
