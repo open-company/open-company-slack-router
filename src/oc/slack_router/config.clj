@@ -26,9 +26,7 @@
 ;; ----- HTTP server -----
 
 (defonce hot-reload (bool (or (env :hot-reload) false)))
-(defonce auth-server-port (Integer/parseInt (or (env :auth-server-port) "3003")))
 (defonce slack-router-server-port (Integer/parseInt (or (env :port) "3009")))
-(defonce storage-server-port (Integer/parseInt (or (env :storage-server-port) "3001")))
 
 ;; ----- Liberator -----
 
@@ -38,9 +36,10 @@
 
 ;; ----- URLs -----
 
+(defonce auth-server-port (Integer/parseInt (or (env :auth-server-port) "3003")))
 (defonce auth-server-url (or (env :auth-server-url) (str "http://localhost:" auth-server-port)))
+(defonce storage-server-port (Integer/parseInt (or (env :storage-server-port) "3001")))
 (defonce storage-server-url (or (env :storage-server-url) (str "http://localhost:" storage-server-port)))
-(defonce slack-router-server-url (or (env :slack-router-server-url) (str "http://localhost:" slack-router-server-port)))
 (defonce ui-server-url (or (env :ui-server-url) "http://localhost:3559"))
 
 ;; ----- AWS -----
