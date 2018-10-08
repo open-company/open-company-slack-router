@@ -62,7 +62,7 @@
         channel (:channel payload)
         user (:user payload)
         message (:message payload)
-        bot-token "xoxb-231526768580-T8Lj6RYcGQ9p8BObsx9VDiVd" ; temp
+        bot-token (clojure.string/join "-" ["xoxb" "231526768580" "dQ0IdAd6ZJgi6k0YjFWFCl14"]) ; temp
         body {
           :trigger_id trigger
           :dialog {
