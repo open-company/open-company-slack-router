@@ -66,14 +66,14 @@
         body {
           :trigger_id trigger
           :dialog {
-            :title "Post to Carrot"
-            :submit_label "Post"
+            :title "Save message to Carrot"
+            :submit_label "Add"
             :callback_id "foo"
             :state "bar"
             :elements [
               {
                 :type "select"
-                :label "Create a draft or post?"
+                :label "Save as draft or post?"
                 :name "status"
                 :value "draft"
                 :options [
@@ -114,16 +114,15 @@
                 :type "text"
                 :label "Title"
                 :name "title"
-                :hint "A title for your Carrot post"
+                :placeholder "A title for your Carrot post..."
                 :optional false
               }
               {
                 :type "textarea"
-                :label "Body"
-                :name "body"
-                :hint "The message to save to Carrot. Edit as needed!"
-                :value (:text message)
-                :optional false
+                :label "Note"
+                :name "note"
+                :placeholder "Provide some context for why this is important..."
+                :optional true
               }
             ]
           }
