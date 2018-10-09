@@ -44,7 +44,7 @@
     'trigger_id' '450676967892.6895731204.3b1d077d82901bb21e3d18e62d20d594',
     'message_ts' '1538877805.000100',
     'user' {
-      'idea' 'U06SBTXJR',
+      'id' 'U06SBTXJR',
       'name' 'sean'
     },
     'action_ts' '1538878700.800208',
