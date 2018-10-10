@@ -65,7 +65,8 @@
   (if-let* [payload (:payload request)
             callback-id (get payload "callback_id")
             type (get payload "type")]
-    (if (and (= callback-id "post") (= type "message_action"))
+    (if (or (and (= callback-id "post") (= type "message_action"))
+            (and (= callback-id "add_post") (= type "dialog_submission")))
       (slack-sns/send-trigger! payload)
       (timbre/warn "Unknown Slack action:" type callback-id))
     (timbre/error "No proper payload in Slack action."))
