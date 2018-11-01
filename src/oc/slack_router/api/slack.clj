@@ -62,6 +62,7 @@
   }
   "
   [request]
+  (timbre/debug request)
   (if-let* [payload (:payload request)
             callback-id (get payload "callback_id")
             type (get payload "type")]
@@ -181,9 +182,11 @@
     :options (fn [ctx] (api-common/allow-anonymous ctx))
     :post (fn [ctx]
       (dosync
-       (let [payload-str (get (-> ctx :request :params) "payload")
+       (let [params (get-in ctx [:request :params])
+             payload-str (get params "payload")
              payload (json/parse-string payload-str)
-             token (get payload "token")]
+             token (or (get payload "token")
+                       (get params "token"))] ;; Token is in the params for url verification
          ;; Token check
          (if-not (= token config/slack-verification-token)
            ;; Eghads! It might be a Slack impersonator!
