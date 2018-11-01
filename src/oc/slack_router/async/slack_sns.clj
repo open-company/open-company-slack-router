@@ -32,11 +32,11 @@
 
 (defn- slack-sns-loop []
   (reset! slack-go true)
-  (timbre/info "Starting slack sns...")
+  (timbre/info "Starting Slack SNS...")
   (async/go (while @slack-go
     (timbre/debug "Slack SNS waiting...")
     (let [message (<! slack-chan)]
-      (timbre/debug "Processing message on slack sns channel...")
+      (timbre/debug "Processing message on Slack SNS channel...")
       (if (:stop message)
         (do (reset! slack-go false) (timbre/info "Slack SNS stopped."))
         (async/thread
@@ -66,5 +66,5 @@
   "Stop the the core.async event loop."
   []
   (when @slack-go
-    (timbre/info "Stopping slack sns...")
+    (timbre/info "Stopping Slack SNS...")
     (>!! slack-chan {:stop true})))

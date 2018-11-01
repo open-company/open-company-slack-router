@@ -7,39 +7,47 @@
 (defrecord HttpKit [options handler server]
   component/Lifecycle
   (start [component]
+    (timbre/info "[http] starting...")
     (let [handler (get-in component [:handler :handler] handler)
           server  (httpkit/run-server handler options)]
+      (timbre/info "[http] started")
       (assoc component :server server)))
   (stop [component]
     (if-not server
       component
       (do
+        (timbre/info "[http] stopping...")
         (server)
+        (timbre/info "[http] stopped")
         (dissoc component :server)))))
 
 (defrecord SlackSNS [slack-sns]
   component/Lifecycle
   (start [component]
-    (timbre/info "[slack-sns] starting")
+    (timbre/info "[slack-sns] starting...")
     (slack-sns/start)
+    (timbre/info "[slack-sns] started")
     (assoc component :slack-sns true))
   (stop [component]
-    (slack-sns/start)
+    (timbre/info "[slack-sns] stopping...")
+    (slack-sns/stop)
+    (timbre/info "[slack-sns] stopped")
     (dissoc component :slack-sns)))
 
 (defrecord Handler [handler-fn]
   component/Lifecycle
   (start [component]
-    (timbre/info "[handler] starting")
+    (timbre/info "[handler] started")
     (assoc component :handler (handler-fn component)))
   (stop [component]
+    (timbre/info "[handler] stopped")
     (dissoc component :handler)))
 
 (defn slack-router-system [{:keys [port handler-fn]}]
   (component/system-map
    :slack-sns (component/using
-               (map->SlackSNS {})
-               [])
+                (map->SlackSNS {})
+                [])
    :handler (component/using
              (map->Handler {:handler-fn handler-fn})
              [])
