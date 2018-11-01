@@ -62,11 +62,11 @@
   }
   "
   [request]
-  (timbre/debug request)
   (if-let* [payload (:payload request)
             callback-id (get payload "callback_id")
             type (get payload "type")]
-    (if (or (and (= callback-id "post") (= type "message_action"))
+    (if (or (= type "interactive_message")
+            (and (= callback-id "post") (= type "message_action"))
             (and (= callback-id "add_post") (= type "dialog_submission")))
       (slack-sns/send-trigger! payload)
       (timbre/warn "Unknown Slack action:" type callback-id))
