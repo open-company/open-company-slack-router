@@ -193,8 +193,8 @@
 
 (defn parse-carrot-url [url]
   (let [split-url (clojure.string/split (get url "url") #"/")
-        org (nth split-url 3)
-        split-count (count split-url)]
+        split-count (count split-url)
+        org (when (> 3 split-count) (nth split-url 3))]
 
     (cond
 
