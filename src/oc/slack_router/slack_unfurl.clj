@@ -28,7 +28,8 @@
 
 (defn get-post-options
   [token]
-  {:headers {"Content-Type" "application/vnd.open-company.entry.v1+json"
+  {:deadlock-guard? false
+   :headers {"Content-Type" "application/vnd.open-company.entry.v1+json"
              "Authorization" (str "Bearer " token)}})
 
 (defn storage-request-org-url
