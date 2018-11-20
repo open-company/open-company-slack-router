@@ -63,12 +63,12 @@
 
 (defn get-data
   [request-url token cb]
-  (http/get request-url (get-post-options token)
-    (fn [{:keys [status headers body error]}]
+  (let [{:keys [status headers body error] :as resp}
+          @(http/get request-url (get-post-options token))]
       (if error
         (timbre/error "Failed, exception is " error)
         (let [parsed-body (json/parse-string body)]
-          (cb parsed-body))))))
+          (cb parsed-body)))))
 
 (defn org-unfurl-data
   [url org-data]
@@ -128,7 +128,7 @@
   (let [content (.text (soup/parse (get post-data "body")))
         reduced-content (clojure.string/join " " ;; split into words
                            (filter not-empty
-                             (take 20 ;; 20 words is the average long sentence
+                             (take 150 ;; 150 words is the average paragraph
                                (clojure.string/split content #" "))))
         title (.text (soup/parse (get post-data "headline")))
         board-slug (get post-data "board-slug")
