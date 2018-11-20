@@ -28,8 +28,7 @@
 
 (defn get-post-options
   [token]
-  {:deadlock-guard? false
-   :headers {"Content-Type" "application/vnd.open-company.entry.v1+json"
+  {:headers {"Content-Type" "application/vnd.open-company.entry.v1+json"
              "Authorization" (str "Bearer " token)}})
 
 (defn storage-request-org-url
@@ -64,12 +63,12 @@
 
 (defn get-data
   [request-url token cb]
-  (http/get request-url (get-post-options token)
-    (fn [{:keys [status headers body error]}]
+  (let [{:keys [status headers body error] :as resp}
+          @(http/get request-url (get-post-options token))]
       (if error
         (timbre/error "Failed, exception is " error)
         (let [parsed-body (json/parse-string body)]
-          (cb parsed-body))))))
+          (cb parsed-body)))))
 
 (defn org-unfurl-data
   [url org-data]
