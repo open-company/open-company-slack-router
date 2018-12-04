@@ -67,6 +67,7 @@
             type (get payload "type")]
     (if (or (= type "interactive_message")
             (and (= callback-id "post") (= type "message_action"))
+            (and (= callback-id "new_post") (= type "message_action"))
             (and (= callback-id "add_post") (= type "dialog_submission")))
       (slack-sns/send-trigger! payload)
       (timbre/warn "Unknown Slack action:" type callback-id))

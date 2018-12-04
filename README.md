@@ -120,10 +120,12 @@ Note the HTTPS URL ngrok provides. It will look like: `https://6ae20d9b.ngrok.io
 To configure the Slack to use the ngrok tunnel as the destination of link_shared events. Go to
 [Your Apps](https://api.slack.com/apps) and click the "Carrot (Local Development)" app.
 
+##### Event Subscriptions
+
 Click the "Event Subscriptions" navigation item in the menu. Click the toggle on.
 
 Add the URL provided by ngrok above, modifying with a `/slack-event` suffix,
-e.g. `https://6ae20d9b.ngrok.io/slack-event`
+e.g. `https://6ae20d9b.ngrok.io/slack-event`.
 
 - Click the "Add Team Event" button and add the `link_shared` event.
 - Click the "Add Bot User Event" button and add the `link_shared` event.
@@ -132,19 +134,28 @@ e.g. `https://6ae20d9b.ngrok.io/slack-event`
 
 Click the "Save Changes" button.
 
-You will need to add domains to the slack app configuration comensurate with where you are setting this up for. E.g.
+You will need to add domains to the slack app configuration comensurate with where you are setting this up for. e.g.
 
 - `localhost` for local dev
 - `staging.<your-domain>` for staging
 - `beta.<your-domain>` for beta
 - `<your-domain>` for production
 
-NB: Make sure when you are done testing locally, you disable the "Enable Events" toggle so Slack will stop trying to echo events to your local environment via ngrok.
+##### Interactive Components
 
-To receive events from the SNS topic with SQS, you will need to subscribe an SQS queue to the topic.
+Click the "Interactive Components" navigation item in the menu. Click the toggle on.
 
-In AWS go to the SQS service console. Click the SQS queue you created. From the
-'Queue Actions' menu, chose 'Subscribe Queue to SNS topic'.
+Add the URL provided by ngrox above, modifying with a `/slack-action` suffix, e.g. `https://6ae20d9b.ngrok.io/slack-action`.
+
+Below in the "Actions" section, create an action named "Save as a Post" with a short description of "Create a post in Carrot from this Slack message", and a Callback ID of `post`.
+
+Click the "Save Changes" button.
+
+
+##### Stopping Development
+
+NB: Make sure when you are done testing locally, you disable the "Enable Events" toggle and the "Interactivity" toggle so Slack will stop trying to echo events to your local environment via ngrok.
+
 
 ## Usage
 

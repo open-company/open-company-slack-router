@@ -13,17 +13,17 @@
 
   :dependencies [
     ;; Lisp on the JVM http://clojure.org/documentation
-    [org.clojure/clojure "1.10.0-beta2"]
+    [org.clojure/clojure "1.10.0-RC2"]
     ;; Command-line parsing https://github.com/clojure/tools.cli
     [org.clojure/tools.cli "0.4.1"]
     [http-kit "2.3.0"] ; Web client/server http://http-kit.org/
     ;; Web application library https://github.com/ring-clojure/ring
-    [ring/ring-devel "1.7.0"]
+    [ring/ring-devel "1.7.1"]
     ;; Web application library https://github.com/ring-clojure/ring
     ;; NB: clj-time pulled in by oc.lib
     ;; NB: joda-time pulled in by oc.lib via clj-time
     ;; NB: commons-codec pulled in by oc.lib
-    [ring/ring-core "1.7.0" :exclusions [clj-time joda-time commons-codec]]
+    [ring/ring-core "1.7.1" :exclusions [clj-time joda-time commons-codec]]
     ;; CORS library https://github.com/jumblerg/ring.middleware.cors
     [jumblerg/ring.middleware.cors "1.0.1"]
     ;; Ring logging https://github.com/nberger/ring-logger-timbre
@@ -35,9 +35,7 @@
     ;; Clojure Slack REST API https://github.com/julienXX/clj-slack
     ;; NB: clj-http pulled in manually
     ;; NB: org.clojure/data.json pulled in manually
-    [org.julienxx/clj-slack "0.5.6" :exclusions [clj-http org.clojure/data.json]]
-    ;; Pretty-print clj and EDN https://github.com/kkinnear/zprint
-    [zprint "0.4.10"]
+    [org.julienxx/clj-slack "0.6.2" :exclusions [clj-http org.clojure/data.json]]
     ;; Not used directly, dependency of oc.lib and org.julienxx/clj-slack https://github.com/dakrone/clj-http
     [clj-http "3.9.1"]
     ;; Not used directly, dependency of oc.lib and org.julienxx/clj-slack https://github.com/clojure/data.json
@@ -48,7 +46,7 @@
     ;; Library for OC projects https://github.com/open-company/open-company-lib
     ;; NB: clj-http pulled in manually
     ;; NB: org.clojure/data.json pulled in manually
-    [open-company/lib "0.16.15" :exclusions [clj-http org.clojure/data.json]]
+    [open-company/lib "0.16.25.1" :exclusions [clj-http org.clojure/data.json]]
     ;; In addition to common functions, brings in the following common dependencies used by this project:
     ;; defun - Erlang-esque pattern matching for Clojure functions https://github.com/killme2008/defun
     ;; if-let - More than one binding for if/when macros https://github.com/LockedOn/if-let
@@ -82,7 +80,7 @@
         ;; NB: clj-time is pulled in by oc.lib
         ;; NB: joda-time is pulled in by oc.lib via clj-time
         ;; NB: commons-codec pulled in by oc.lib
-        [midje "1.9.3" :exclusions [joda-time clj-time commons-codec]] 
+        [midje "1.9.4" :exclusions [joda-time clj-time commons-codec]] 
         ;; Test Ring requests https://github.com/weavejester/ring-mock
         [ring-mock "0.1.5"]
       ]
@@ -90,7 +88,7 @@
         ;; Example-based testing https://github.com/marick/lein-midje
         [lein-midje "3.2.1"]
         ;; Linter https://github.com/jonase/eastwood
-        [jonase/eastwood "0.3.1"]
+        [jonase/eastwood "0.3.3"]
         ;; Static code search for non-idiomatic code https://github.com/jonase/kibit
         ;; NB: rewrite-clj is pulled in manually
         ;; NB: org.clojure/tools.reader pulled in manually
@@ -99,7 +97,7 @@
         ;; NB: org.clojure/tools.reader pulled in manually
         [rewrite-clj "0.6.1" :exclusions [org.clojure/tools.reader]]
         ;; Not used directly, dependency of lein-kibit and rewrite-clj https://github.com/clojure/tools.reader
-        [org.clojure/tools.reader "1.3.0"]
+        [org.clojure/tools.reader "1.3.2"]
       ]
     }
 
@@ -129,10 +127,6 @@
         [lein-spell "0.1.0"]
         ;; Dead code finder (use carefully, lot's of false positives) https://github.com/venantius/yagni
         [venantius/yagni "0.1.6" :exclusions [org.clojure/clojure]]
-        ;; Pretty-print clj and EDN https://github.com/kkinnear/lein-zprint
-        ;; NB: rewrite-clj is pulled in manually
-        ;; NB: rewrite-cljs not needed
-        [lein-zprint "0.3.10" :exclusions [org.clojure/clojure rewrite-clj rewrite-cljs]]
       ]
     }]
 
