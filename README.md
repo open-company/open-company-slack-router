@@ -147,7 +147,9 @@ Click the "Interactive Components" navigation item in the menu. Click the toggle
 
 Add the URL provided by ngrox above, modifying with a `/slack-action` suffix, e.g. `https://6ae20d9b.ngrok.io/slack-action`.
 
-Below in the "Actions" section, create an action named "Save as a Post" with a short description of "Create a post in Carrot from this Slack message", and a Callback ID of `post`.
+Below in the "Actions" section, create an action named "Save as a Post" with a short description of "Create a post in Carrot from this Slack message", and a Callback ID of `save_message`.
+
+Also create an action named "Add a Post" with a short description of "Add a new post to Carrot", and a Callback ID of `add_post`.
 
 Click the "Save Changes" button.
 

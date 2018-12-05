@@ -30,7 +30,7 @@
   The idea here is to do very minimal processing and get a 200 back to Slack as fast as possible as this is a 'fire hose'
   of requests. So minimal logging and minimal handling of the request.
   
-  Message events look like:
+  Message actions look like:
   
   { 
     'message' {
@@ -60,17 +60,52 @@
       'domain' 'opencompanyhq'
     }
   }
+
+  Slash commands look like:
+
+  {
+    'user_id' 'U06SBTXJR',
+    'token' 'aLbD1VFXN31DEgpFIvxu32JV',
+    'trigger_id' '496400427637.6895731204.414ded742c7cab59c27669fc3a61bf4d',
+    'channel_id' 'C10A1P4H2',
+    'command' '/carrot',
+    'user_name' 'sean',
+    'team_domain' 'opencompanyhq',
+    'team_id' 'T06SBMH60',
+    'text' 'help',
+    'response_url' 'https://hooks.slack.com/commands/T06SBMH60/495597261633/yIBktJ6fmD3USIu0FEbBo8ed',
+    'channel_name' 'bot-testing'
+  }
   "
   [request]
-  (if-let* [payload (:payload request)
-            callback-id (get payload "callback_id")
-            type (get payload "type")]
-    (if (or (= type "interactive_message")
-            (and (= callback-id "post") (= type "message_action"))
-            (and (= callback-id "new_post") (= type "message_action"))
-            (and (= callback-id "add_post") (= type "dialog_submission")))
+  (if-let* [payload (or (:payload request) (-> request :request :params))
+            callback-id (or (get payload "callback_id") (get payload "text") "help")
+            type (or (get payload "type") (get payload "command"))]
+    
+    ;; All the parts of the payload are here
+    (if (or 
+            ;; Actions        
+            (and (= type "message_action") (= callback-id "add_post")) ; Add a new post w/ action
+            (and (= type "message_action") (= callback-id "save_message")) ; Save a Slack message w/ action
+            
+            ;; Slash commands
+            (and (= type "/carrot") (= callback-id "new")) ; Slash command to add a post
+            (and (= type "/carrot") (= callback-id "help")) ; Slash command to get help
+            
+            ;; Dialog submissions
+            (and (= type "dialog_submission") (= callback-id "add_post")) ; Submit our new post dialog
+            (and (= type "dialog_submission") (= callback-id "save_message")) ; Submit our save message dialog
+      
+            ;; Button presses, menus https://api.slack.com/interactive-messages
+            (= type "interactive_message"))
+      
+      ;; if action was known
       (slack-sns/send-trigger! payload)
+      
+      ;; if action was unknown
       (timbre/warn "Unknown Slack action:" type callback-id))
+    
+    ;; All the parts of the payload are not here
     (timbre/error "No proper payload in Slack action."))
   {:status 200})
 
