@@ -6,7 +6,7 @@
             [liberator.core :refer (defresource by-method)]
             [cheshire.core :as json]
             [oc.lib.api.common :as api-common]
-            [oc.slack-router.auth :as auth]
+            [oc.lib.auth :as auth]
             [oc.slack-router.slack-unfurl :as slack-unfurl]
             [oc.slack-router.async.slack-sns :as slack-sns]
             [oc.slack-router.config :as config]))
@@ -124,7 +124,8 @@
         (let [slack-users (get body "authed_users")
               slack-team-id (get body "team_id")]
           (doseq [slack-user slack-users]
-            (let [user-token (auth/user-token slack-user slack-team-id)]
+            (let [user-token (auth/user-token {:slack-user-id slack-user :slack-team-id slack-team-id}
+                              config/auth-server-url config/passphrase "Slack Router")]
               (when user-token
                 (render-slack-unfurl user-token body)))))
         :default
