@@ -128,7 +128,7 @@
   (let [content (.text (soup/parse (get post-data "body")))
         reduced-content (clojure.string/join " " ;; split into words
                            (filter not-empty
-                             (take 150 ;; 150 words is the average paragraph
+                             (take 20 ;; 20 words is the average sentence
                                (clojure.string/split content #" "))))
         title (.text (soup/parse (get post-data "headline")))
         board-slug (get post-data "board-slug")
