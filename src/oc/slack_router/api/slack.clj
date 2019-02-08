@@ -12,7 +12,6 @@
             [oc.slack-router.config :as config]))
 
 (defn render-slack-unfurl [token body]
-  (timbre/debug "render unfurl: " token body)
   (let [event (get body "event")
         links (get event "links")
         message_ts (get event "message_ts")
@@ -124,7 +123,6 @@
         ;; https://api.slack.com/docs/message-link-unfurling
         (let [slack-users (get body "authed_users")
               slack-team-id (get body "team_id")]
-          (timbre/debug "LINKED SHARED EVENT:" slack-users slack-team-id)
           (reduce ;; iterate through list and stop on first success
            (fn [acc slack-user]
              (if-let [user-token (auth/user-token
@@ -135,7 +133,6 @@
                                     "Slack Router")]
                (try
                  (render-slack-unfurl user-token body)
-                 (timbre/debug "REDUCED!!! " slack-user)
                  (reduced acc)
                  (catch Exception e
                    (do
