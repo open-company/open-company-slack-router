@@ -12,6 +12,7 @@
             [oc.slack-router.config :as config]))
 
 (defn render-slack-unfurl [token body]
+  (timbre/debug "render unfurl: " token body)
   (let [event (get body "event")
         links (get event "links")
         message_ts (get event "message_ts")
@@ -123,11 +124,26 @@
         ;; https://api.slack.com/docs/message-link-unfurling
         (let [slack-users (get body "authed_users")
               slack-team-id (get body "team_id")]
-          (doseq [slack-user slack-users]
-            (let [user-token (auth/user-token {:slack-user-id slack-user :slack-team-id slack-team-id}
-                              config/auth-server-url config/passphrase "Slack Router")]
-              (when user-token
-                (render-slack-unfurl user-token body)))))
+          (timbre/debug slack-users)
+          (reduce ;; iterate through list and stop on first success
+           (fn [acc slack-user]
+             (timbre/debug slack-user)
+             (if-let [user-token (auth/user-token
+                                    {:slack-user-id slack-user
+                                     :slack-team-id slack-team-id}
+                                    config/auth-server-url
+                                    config/passphrase
+                                    "Slack Router")]
+               (try
+                 (render-slack-unfurl user-token body)
+                 (reduced acc)
+                 (catch Exception e
+                   (do
+                     (timbre/info "Exception on slack unfurl" e)
+                     (inc acc))))
+               (inc acc)))
+           0
+           slack-users))
         :default
         (slack-sns/send-trigger! body)))
      :default
