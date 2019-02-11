@@ -136,9 +136,13 @@
                  (reduced acc)
                  (catch Exception e
                    (do
-                     (timbre/info "Exception on slack unfurl" e)
+                     (timbre/error "Exception on slack unfurl:" e)
                      (inc acc))))
-               (inc acc)))
+               (do
+                 (timbre/info "Missing jwt token for user: "
+                              slack-user
+                              slack-team-id)
+                 (inc acc))))
            0
            slack-users))
         :default
