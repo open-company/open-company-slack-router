@@ -136,10 +136,10 @@
                              (reduced [])
                              (catch Exception e
                                (do
-                                 (timbre/error "Exception on slack unfurl:" e)
+                                 (timbre/error "Exception on slack unfurl: " e)
                                  (conj acc e))))
                            (let [emessage (str "Missing jwt token for user: "
-                                               slack-user
+                                               slack-user " "
                                                slack-team-id)]
                                  (timbre/info emessage)
                                  (conj acc emessage))))
