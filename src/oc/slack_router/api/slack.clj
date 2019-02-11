@@ -145,8 +145,9 @@
                                  (conj acc emessage))))
                            []
                            slack-users)]
-          (when (pos? (count errors?))
-            (throw (Exception. (str errors?)))))
+          (if (pos? (count errors?))
+            (throw (Exception. (str errors?)))
+            errors?))
         :default
         (slack-sns/send-trigger! body)))
      :default
