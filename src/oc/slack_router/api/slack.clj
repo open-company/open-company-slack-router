@@ -122,29 +122,31 @@
         ;; Handle the unfurl request
         ;; https://api.slack.com/docs/message-link-unfurling
         (let [slack-users (get body "authed_users")
-              slack-team-id (get body "team_id")]
-          (reduce ;; iterate through list and stop on first success
-           (fn [acc slack-user]
-             (if-let [user-token (auth/user-token
-                                    {:slack-user-id slack-user
-                                     :slack-team-id slack-team-id}
-                                    config/auth-server-url
-                                    config/passphrase
-                                    "Slack Router")]
-               (try
-                 (render-slack-unfurl user-token body)
-                 (reduced acc)
-                 (catch Exception e
-                   (do
-                     (timbre/error "Exception on slack unfurl:" e)
-                     (inc acc))))
-               (do
-                 (timbre/info "Missing jwt token for user: "
-                              slack-user
-                              slack-team-id)
-                 (inc acc))))
-           0
-           slack-users))
+              slack-team-id (get body "team_id")
+              errors? (reduce ;; iterate through list and stop on first success
+                       (fn [acc slack-user]
+                         (if-let [user-token (auth/user-token
+                                              {:slack-user-id slack-user
+                                               :slack-team-id slack-team-id}
+                                              config/auth-server-url
+                                              config/passphrase
+                                              "Slack Router")]
+                           (try
+                             (render-slack-unfurl user-token body)
+                             (reduced [])
+                             (catch Exception e
+                               (do
+                                 (timbre/error "Exception on slack unfurl:" e)
+                                 (conj acc e))))
+                           (let [emessage (str "Missing jwt token for user: "
+                                               slack-user
+                                               slack-team-id)]
+                                 (timbre/info emessage)
+                                 (conj acc emessage))))
+                           []
+                           slack-users)]
+          (when (pos? (count errors?))
+            (throw (Exception. (str errors?)))))
         :default
         (slack-sns/send-trigger! body)))
      :default
