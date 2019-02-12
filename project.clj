@@ -181,9 +181,11 @@
 
   :eastwood {
     ;; Disable some linters that are enabled by default
-    :exclude-linters [:constant-test :wrong-arity]
+    ;; wrong-arity - unfortunate, but it's failing on 7/arity of sns/publish
+    ;; implicit-dependencies - uhh, just seems dumb
+    :exclude-linters [:wrong-arity :implicit-dependencies]
     ;; Enable some linters that are disabled by default
-    :add-linters [:unused-namespaces :unused-private-vars]
+    :add-linters [:unused-namespaces :unused-private-vars] ; :unused-locals]
 
     ;; Exclude testing namespaces
     :tests-paths ["test"]

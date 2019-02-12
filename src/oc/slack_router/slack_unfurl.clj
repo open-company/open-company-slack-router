@@ -63,7 +63,7 @@
 
 (defn get-data
   [request-url token cb]
-  (let [{:keys [status headers body error] :as resp}
+  (let [{:keys [body error]}
           @(http/get request-url (get-post-options token))]
       (if error
         (timbre/error "Failed, exception is " error)
