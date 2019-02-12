@@ -86,15 +86,16 @@
     (if (or 
             ;; Actions        
             (and (= type "message_action") (= callback-id "add_post")) ; Add a new post w/ action
-            (and (= type "message_action") (= callback-id "save_message")) ; Save a Slack message w/ action
-            
+            (and (= type "message_action") (= callback-id "save_message_a")) ; Save a Slack message w/ action
+            (and (= type "message_action") (= callback-id "save_message_b")) ; Save a Slack message w/ action
             ;; Slash commands
             (and (= type "/carrot") (= callback-id "new")) ; Slash command to add a post
             (and (= type "/carrot") (= callback-id "help")) ; Slash command to get help
             
             ;; Dialog submissions
             (and (= type "dialog_submission") (= callback-id "add_post")) ; Submit our new post dialog
-            (and (= type "dialog_submission") (= callback-id "save_message")) ; Submit our save message dialog
+            (and (= type "dialog_submission") (= callback-id "save_message_a")) ; Submit our save message dialog
+            (and (= type "dialog_submission") (= callback-id "save_message_b")) ; Submit our save message dialog
       
             ;; Button presses, menus https://api.slack.com/interactive-messages
             (= type "interactive_message"))
