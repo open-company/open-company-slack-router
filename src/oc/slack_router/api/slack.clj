@@ -159,12 +159,32 @@
         ;; Handle the unfurl request
         ;; https://api.slack.com/docs/message-link-unfurling
         (let [slack-users (get body "authed_users")
-              slack-team-id (get body "team_id")]
-          (doseq [slack-user slack-users]
-            (let [user-token (auth/user-token {:slack-user-id slack-user :slack-team-id slack-team-id}
-                              config/auth-server-url config/passphrase "Slack Router")]
-              (when user-token
-                (render-slack-unfurl user-token body)))))
+              slack-team-id (get body "team_id")
+              errors? (reduce ;; iterate through list and stop on first success
+                       (fn [acc slack-user]
+                         (if-let [user-token (auth/user-token
+                                              {:slack-user-id slack-user
+                                               :slack-team-id slack-team-id}
+                                              config/auth-server-url
+                                              config/passphrase
+                                              "Slack Router")]
+                           (try
+                             (render-slack-unfurl user-token body)
+                             (reduced [])
+                             (catch Exception e
+                               (do
+                                 (timbre/error "Exception on slack unfurl: " e)
+                                 (conj acc e))))
+                           (let [emessage (str "Missing jwt token for user: "
+                                               slack-user " "
+                                               slack-team-id)]
+                                 (timbre/info emessage)
+                                 (conj acc emessage))))
+                           []
+                           slack-users)]
+          (if (pos? (count errors?))
+            (throw (ex-info (str "Slack link_shared errors:" (count errors?)) {:errors errors?}))
+            errors?))
         :default
         (slack-sns/send-trigger! body)))
      :default
