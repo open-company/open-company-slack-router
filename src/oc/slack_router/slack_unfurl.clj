@@ -8,6 +8,7 @@
             [clj-time.format :as time-format]
             [oc.lib.slack :as slack-lib]
             [oc.lib.jwt :as jwt]
+            [oc.lib.html :as html]
             [oc.slack-router.config :as config]))
 
 (defn- index-of
@@ -125,7 +126,8 @@
 
 (defn post-unfurl-data
   [url post-data]
-  (let [content (.text (soup/parse (get post-data "body")))
+  (let [html-body (get post-data "body")
+        content (.text (soup/parse html-body))
         reduced-content (clojure.string/join " " ;; split into words
                            (filter not-empty
                              (take 20 ;; 20 words is the average sentence
@@ -152,7 +154,9 @@
                     )
         org (get post-data "org-name")
         org-logo (get post-data "org-logo-url")
-        url-text (get url "url")]
+        url-text (get url "url")
+        thumbnail-data (html/first-body-thumbnail html-body)
+        thumbnail-url (if thumbnail-data (:thumbnail thumbnail-data) "")]
     (json/encode {url-text
                   {
                    :author_name org
@@ -162,6 +166,7 @@
                    :text (if (< (count reduced-content) (count content))
                               (str reduced-content " ...")
                               content)
+                   :thumb_url thumbnail-url
                    :footer footer
                    :attachment_type "default"
                    :color "good" ;; this can be a hex color
