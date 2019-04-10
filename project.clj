@@ -13,10 +13,10 @@
 
   :dependencies [
     ;; Lisp on the JVM http://clojure.org/documentation
-    [org.clojure/clojure "1.10.0"]
+    [org.clojure/clojure "1.10.1-beta1"]
     ;; Command-line parsing https://github.com/clojure/tools.cli
-    [org.clojure/tools.cli "0.4.1"]
-    [http-kit "2.4.0-alpha3"] ; Web client/server http://http-kit.org/
+    [org.clojure/tools.cli "0.4.2"]
+    [http-kit "2.4.0-alpha4"] ; Web client/server http://http-kit.org/
     ;; Web application library https://github.com/ring-clojure/ring
     [ring/ring-devel "1.7.1"]
     ;; Web application library https://github.com/ring-clojure/ring
@@ -35,18 +35,21 @@
     ;; Clojure Slack REST API https://github.com/julienXX/clj-slack
     ;; NB: clj-http pulled in manually
     ;; NB: org.clojure/data.json pulled in manually
-    [org.julienxx/clj-slack "0.6.2" :exclusions [clj-http org.clojure/data.json]]
+    [org.julienxx/clj-slack "0.6.3" :exclusions [clj-http org.clojure/data.json]]
+    ;; Pretty-print clj and EDN https://github.com/kkinnear/zprint
+    [zprint "0.4.15"]
     ;; Not used directly, dependency of oc.lib and org.julienxx/clj-slack https://github.com/dakrone/clj-http
     [clj-http "3.9.1"]
     ;; Not used directly, dependency of oc.lib and org.julienxx/clj-slack https://github.com/clojure/data.json
     [org.clojure/data.json "0.2.6"]
-
     ;; Clojure wrapper for jsoup HTML parser https://github.com/mfornos/clojure-soup
     [clj-soup/clojure-soup "0.1.3"]
+    
     ;; Library for OC projects https://github.com/open-company/open-company-lib
     ;; NB: clj-http pulled in manually
     ;; NB: org.clojure/data.json pulled in manually
-    [open-company/lib "0.16.36" :exclusions [clj-http org.clojure/data.json]]
+    ;; NB: http-kit pulled in manually
+    [open-company/lib "0.17.5" :exclusions [clj-http org.clojure/data.json http-kit]]
     ;; In addition to common functions, brings in the following common dependencies used by this project:
     ;; defun - Erlang-esque pattern matching for Clojure functions https://github.com/killme2008/defun
     ;; if-let - More than one binding for if/when macros https://github.com/LockedOn/if-let
@@ -64,8 +67,10 @@
   ]
 
   :plugins [
-    [lein-ring "0.12.4"]
-    [lein-environ "1.1.0"] ; Get environment settings from different sources https://github.com/weavejester/environ
+    ;; Common ring tasks https://github.com/weavejester/lein-ring
+    [lein-ring "0.12.5"]
+    ;; Get environment settings from different sources https://github.com/weavejester/environ
+    [lein-environ "1.1.0"]
   ]
 
   :profiles {
@@ -80,7 +85,7 @@
         ;; NB: clj-time is pulled in by oc.lib
         ;; NB: joda-time is pulled in by oc.lib via clj-time
         ;; NB: commons-codec pulled in by oc.lib
-        [midje "1.9.6" :exclusions [joda-time clj-time commons-codec]] 
+        [midje "1.9.8" :exclusions [joda-time clj-time commons-codec]] 
         ;; Test Ring requests https://github.com/weavejester/ring-mock
         [ring-mock "0.1.5"]
       ]
@@ -116,7 +121,7 @@
       :plugins [
         ;; Check for code smells https://github.com/dakrone/lein-bikeshed
         ;; NB: org.clojure/tools.cli is pulled in by lein-kibit
-        [lein-bikeshed "0.5.1" :exclusions [org.clojure/tools.cli]] 
+        [lein-bikeshed "0.5.2" :exclusions [org.clojure/tools.cli]] 
         ;; Runs bikeshed, kibit and eastwood https://github.com/itang/lein-checkall
         [lein-checkall "0.1.1"]
         ;; pretty-print the lein project map https://github.com/technomancy/leiningen/tree/master/lein-pprint
@@ -127,6 +132,10 @@
         [lein-spell "0.1.0"]
         ;; Dead code finder (use carefully, lot's of false positives) https://github.com/venantius/yagni
         [venantius/yagni "0.1.7" :exclusions [org.clojure/clojure]]
+        ;; Pretty-print clj and EDN https://github.com/kkinnear/lein-zprint
+        ;; NB: rewrite-clj is pulled in manually
+        ;; NB: rewrite-cljs not needed
+        [lein-zprint "0.3.15" :exclusions [org.clojure/clojure rewrite-clj rewrite-cljs]]
       ]
     }]
 
@@ -181,9 +190,10 @@
 
   :eastwood {
     ;; Disable some linters that are enabled by default
+    ;; contant-test - just seems mostly ill-advised, logical constants are useful in something like a `->cond` 
     ;; wrong-arity - unfortunate, but it's failing on 7/arity of sns/publish
     ;; implicit-dependencies - uhh, just seems dumb
-    :exclude-linters [:wrong-arity :implicit-dependencies]
+    :exclude-linters [:constant-test :wrong-arity :implicit-dependencies]
     ;; Enable some linters that are disabled by default
     :add-linters [:unused-namespaces :unused-private-vars] ; :unused-locals]
 
