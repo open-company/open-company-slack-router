@@ -9,6 +9,7 @@
             [oc.lib.slack :as slack-lib]
             [oc.lib.jwt :as jwt]
             [oc.lib.html :as html]
+            [oc.lib.user-avatar :as user-avatar]
             [oc.slack-router.config :as config]))
 
 (defn- index-of
@@ -71,6 +72,12 @@
         (let [parsed-body (json/parse-string body)]
           (cb parsed-body)))))
 
+(defn- vertical-line-color [post-data]
+  (if (and (contains? post-data "must-see")
+           (get post-data "must-see"))
+    "#6187F8"
+    "#E8E8E8"))
+
 (defn org-unfurl-data
   [url org-data]
   (let [org-name (get org-data "name")
@@ -94,7 +101,25 @@
                  :text content
                  :footer footer
                  :attachment_type "default"
-                 :color "good" ;; this can be a hex color
+                 :color (vertical-line-color nil) ;; this can be a hex color
+                 :actions [{:text "View org" :type "button" :url url-text}]
+                 }})))
+
+(defn all-posts-unfurl-data
+  [url org-data]
+  (let [org-name (get org-data "name")
+        org-logo (get org-data "logo-url")
+        url-text (get url "url")]
+  (json/encode {url-text
+                {
+                 :author_name org-name
+                 :author_icon org-logo
+                 :title "All Posts"
+                 :title_link url-text
+                 :text "All posts is a stream of what’s new across all sections."
+                 :attachment_type "default"
+                 :color (vertical-line-color nil) ;; this can be a hex color
+                 :actions [{:text "View posts" :type "button" :url url-text}]
                  }})))
 
 (defn section-unfurl-data
@@ -121,7 +146,8 @@
                  :text content
                  :footer footer
                  :attachment_type "default"
-                 :color "good" ;; this can be a hex color
+                 :color (vertical-line-color nil) ;; this can be a hex color
+                 :actions [{:text "View section" :type "button" :url url-text}]
                  }})))
 
 (defn post-unfurl-data
@@ -132,44 +158,33 @@
                            (filter not-empty
                              (take 20 ;; 20 words is the average sentence
                                (clojure.string/split content #" "))))
-        title (.text (soup/parse (get post-data "headline")))
-        board-slug (get post-data "board-slug")
-        author (get (get post-data "publisher") "name")
-        comments-link-idx (index-of
-                           (get post-data "links")
-                           #(and (= (get % "rel") "comments") (= (get % "method") "GET")))
-        comments (get (get post-data "links") comments-link-idx)
-        comment-count (get comments "count")
-        footer (str "Posted in "
-                    board-slug
-                    " by "
-                    author
-                    "  |  "
-                    (post-date (get post-data "published-at"))
-                    "  |  "
-                    comment-count
-                    (if (= 1 comment-count)
-                      " comment "
-                      " comments ")
-                    )
-        org (get post-data "org-name")
-        org-logo (get post-data "org-logo-url")
+        headline (.text (soup/parse (get post-data "headline")))
+        must-see (get post-data "must-see")
+        title (if must-see
+                (str "[Must see] " headline)
+                headline)
+        board-name (get post-data "board-name")
+        publisher (get post-data "publisher")
+        author-name (or (get publisher "name")
+                        (str (get publisher "first-name") " " (get publisher "last-name")))
+        author-name-label (str author-name " in " board-name)
+        author-avatar (user-avatar/fix-avatar-url config/filestack-api-key (get publisher "avatar-url"))
         url-text (get url "url")
         thumbnail-data (html/first-body-thumbnail html-body)
         thumbnail-url (if thumbnail-data (:thumbnail thumbnail-data) "")]
     (json/encode {url-text
                   {
-                   :author_name org
-                   :author_icon org-logo
+                   :author_name author-name
+                   :author_icon author-avatar
                    :title title
                    :title_link url-text
                    :text (if (< (count reduced-content) (count content))
                               (str reduced-content " ...")
                               content)
                    :thumb_url thumbnail-url
-                   :footer footer
                    :attachment_type "default"
-                   :color "good" ;; this can be a hex color
+                   :color (vertical-line-color post-data) ;; this can be a hex color
+                   :actions [{:text "View post" :type "button" :url url-text}]
                    }})))
 
 (defn update-slack-url
@@ -183,6 +198,9 @@
 
                     (and (get data "headline") (get data "body"))
                     (post-unfurl-data url data)
+
+                    (get data "all-posts")
+                    (all-posts-unfurl-data url data)
 
                     (and (get data "slug") (get data "entries"))
                     (section-unfurl-data url data)
@@ -206,6 +224,12 @@
      (= 4 split-count)
      {:org org
       :url-type "org"}
+
+     ;;http://carrot.io/carrot/all-posts
+     (and (= 5 split-count)
+          (= (nth split-url 4) "all-posts"))
+     {:org org
+      :url-type "all-posts"}
 
      ;;http://carrot.io/carrot/general
      (= 5 split-count)
@@ -251,6 +275,11 @@
                       (:section parsed-link)
                       (:uuid parsed-link))
 
+                     (= "all-posts" url-type)
+
+                     (storage-request-org-url
+                      (:org parsed-link))
+
                      (= "section" url-type)
 
                      (storage-request-section-url
@@ -263,7 +292,6 @@
 
                      :default
                      nil)]
-
     (when request-url
       (cond
        (= "org" url-type)
@@ -276,6 +304,16 @@
                     message_ts
                     link
                     data)))
+       (= "all-posts" url-type)
+       (get-data request-url
+                 token
+                 (fn [org-data]
+                   (update-slack-url slack-token
+                                     channel
+                                     message_ts
+                                     link
+                                     (assoc org-data "all-posts" true))))
+
        (= "section" url-type)
        (get-data (storage-request-org-url (:org parsed-link))
                  token
