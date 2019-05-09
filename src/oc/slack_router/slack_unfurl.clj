@@ -5,28 +5,11 @@
             [cheshire.core :as json]
             [taoensso.timbre :as timbre]
             [jsoup.soup :as soup]
-            [clj-time.format :as time-format]
             [oc.lib.slack :as slack-lib]
             [oc.lib.jwt :as jwt]
             [oc.lib.html :as html]
             [oc.lib.user-avatar :as user-avatar]
             [oc.slack-router.config :as config]))
-
-(defn- index-of
-  "Given a collection and a function return the index that make the function truely."
-  [s f]
-  (loop [idx 0 items s]
-    (cond
-      (empty? items) nil
-      (f (first items)) idx
-      :else (recur (inc idx) (rest items)))))
-
-(def iso-format (time-format/formatters :date-time))
-(def date-format (time-format/formatter "MMMM d"))
-
-(defn- post-date [timestamp]
-  (let [d (time-format/parse iso-format timestamp)]
-    (time-format/unparse date-format d)))
 
 (defn get-post-options
   [token]
@@ -337,7 +320,6 @@
                       (get-data request-url
                                 token
                                 (fn [data]
-                                  (timbre/debug data)
                                   (update-slack-url
                                    slack-token
                                    channel
