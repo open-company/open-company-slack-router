@@ -174,7 +174,7 @@
         thumbnail-url (if thumbnail-data (:thumbnail thumbnail-data) "")]
     (json/encode {url-text
                   {
-                   :author_name author-name
+                   :author_name author-name-label
                    :author_icon author-avatar
                    :title title
                    :title_link url-text
