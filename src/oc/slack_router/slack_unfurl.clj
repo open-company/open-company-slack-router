@@ -99,7 +99,7 @@
                  :author_icon org-logo
                  :title "All Posts"
                  :title_link url-text
-                 :text "All posts is a stream of what’s new across all sections."
+                 :text "All posts is a stream of what’s new in Carrot."
                  :attachment_type "default"
                  :color (vertical-line-color nil) ;; this can be a hex color
                  :actions [{:text "View posts" :type "button" :url url-text}]
