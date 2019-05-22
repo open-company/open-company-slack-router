@@ -13,7 +13,7 @@
 
   :dependencies [
     ;; Lisp on the JVM http://clojure.org/documentation
-    [org.clojure/clojure "1.10.1-beta1"]
+    [org.clojure/clojure "1.10.1-RC1"]
     ;; Command-line parsing https://github.com/clojure/tools.cli
     [org.clojure/tools.cli "0.4.2"]
     [http-kit "2.4.0-alpha4"] ; Web client/server http://http-kit.org/
@@ -39,7 +39,7 @@
     ;; Pretty-print clj and EDN https://github.com/kkinnear/zprint
     [zprint "0.4.15"]
     ;; Not used directly, dependency of oc.lib and org.julienxx/clj-slack https://github.com/dakrone/clj-http
-    [clj-http "3.9.1"]
+    [clj-http "3.10.0"]
     ;; Not used directly, dependency of oc.lib and org.julienxx/clj-slack https://github.com/clojure/data.json
     [org.clojure/data.json "0.2.6"]
     ;; Clojure wrapper for jsoup HTML parser https://github.com/mfornos/clojure-soup
@@ -49,7 +49,7 @@
     ;; NB: clj-http pulled in manually
     ;; NB: org.clojure/data.json pulled in manually
     ;; NB: http-kit pulled in manually
-    [open-company/lib "0.17.5" :exclusions [clj-http org.clojure/data.json http-kit]]
+    [open-company/lib "0.17.8" :exclusions [clj-http org.clojure/data.json http-kit]]
     ;; In addition to common functions, brings in the following common dependencies used by this project:
     ;; defun - Erlang-esque pattern matching for Clojure functions https://github.com/killme2008/defun
     ;; if-let - More than one binding for if/when macros https://github.com/LockedOn/if-let
