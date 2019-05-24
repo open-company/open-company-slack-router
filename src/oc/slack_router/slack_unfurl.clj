@@ -66,7 +66,7 @@
   (let [org-name (get org-data "name")
         org-logo (get org-data "logo-url")
         title (str org-name " on Carrot")
-        content "Carrot keeps everyone aligned around what matters most."
+        content "Key updates and information nobody should miss."
         section-count (count (get org-data "boards"))
         footer (str org-name
                     " | "
@@ -111,7 +111,7 @@
         org-name (get org-data "name")
         org-logo (get org-data "logo-url")
         title (get section-data "name")
-        content (str "A section of the " org-name " digest.")
+        content "Key updates and information nobody should miss."
         post-count (count (get section-data "entries"))
         footer (str title
                     " | "
