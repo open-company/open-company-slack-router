@@ -160,7 +160,7 @@
                    :author_icon author-avatar
                    :title title
                    :title_link url-text
-                   :text (or abstract reduced-content)
+                   :text (if (clojure.string/blank? abstract) reduced-content abstract)
                    :thumb_url thumbnail-url
                    :attachment_type "default"
                    :color (vertical-line-color post-data) ;; this can be a hex color
