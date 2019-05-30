@@ -60,3 +60,7 @@
 (defonce slack-verification-token (env :open-company-slack-verification-token))
 (defonce slack-client-id (env :open-company-slack-client-id))
 (defonce slack-client-secret (env :open-company-slack-client-secret))
+
+;; ----- Filestack -----
+
+(defonce filestack-api-key (env :filestack-api-key))
