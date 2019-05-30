@@ -7,6 +7,7 @@
             [jsoup.soup :as soup]
             [oc.lib.slack :as slack-lib]
             [oc.lib.jwt :as jwt]
+            [oc.lib.text :as text]
             [oc.lib.html :as html]
             [oc.lib.user-avatar :as user-avatar]
             [oc.slack-router.config :as config]))
@@ -137,11 +138,9 @@
   [url post-data]
   (let [html-body (get post-data "body")
         content (.text (soup/parse html-body))
-        reduced-content (clojure.string/join " " ;; split into words
-                           (filter not-empty
-                             (take 20 ;; 20 words is the average sentence
-                               (clojure.string/split content #" "))))
+        reduced-content (text/truncated-body content)
         headline (.text (soup/parse (get post-data "headline")))
+        abstract (some-> (get post-data "abstract") soup/parse .text)
         must-see (get post-data "must-see")
         title (if must-see
                 (str "[Must see] " headline)
@@ -161,9 +160,7 @@
                    :author_icon author-avatar
                    :title title
                    :title_link url-text
-                   :text (if (< (count reduced-content) (count content))
-                              (str reduced-content " ...")
-                              content)
+                   :text (if (clojure.string/blank? abstract) reduced-content abstract)
                    :thumb_url thumbnail-url
                    :attachment_type "default"
                    :color (vertical-line-color post-data) ;; this can be a hex color
