@@ -34,19 +34,25 @@ Prospective users of [Carrot](https://carrot.io/) should get started by going to
 
 Most of the dependencies are internal, meaning [Leiningen](https://github.com/technomancy/leiningen) will handle getting them for you. There are a few exceptions:
 
-* [Java 8](http://www.oracle.com/technetwork/java/javase/downloads/index.html) - a Java 8 JRE is needed to run Clojure
-* [Leiningen](https://github.com/technomancy/leiningen) - Clojure's build and dependency management tool
+* [Java](http://www.oracle.com/technetwork/java/javase/downloads/index.html) - a Java 8+ JRE is needed to run Clojure
+* [Leiningen](https://github.com/technomancy/leiningen) 2.9.1+ - Clojure's build and dependency management tool
 * [ngrok](https://ngrok.com/) - Secure web tunnel to localhost
 
 #### Java
 
-Chances are your system already has Java 8+ installed. You can verify this with:
+Your system may already have Java 8+ installed. You can verify this with:
 
 ```console
 java -version
 ```
 
 If you do not have Java 8+ [download it](http://www.oracle.com/technetwork/java/javase/downloads/index.html) and follow the installation instructions.
+
+An option we recommend is [OpenJDK](https://openjdk.java.net/). There are [instructions for Linux](https://openjdk.java.net/install/index.html) and [Homebrew](https://brew.sh/) can be used to install OpenJDK on a Mac with:
+
+```
+brew update && brew cask install adoptopenjdk8
+```
 
 #### Leiningen
 
@@ -205,7 +211,7 @@ Please note that this project is released with a [Contributor Code of Conduct](h
 
 Distributed under the [GNU Affero General Public License Version 3](https://www.gnu.org/licenses/agpl-3.0.en.html).
 
-Copyright © 2018 OpenCompany, LLC
+Copyright © 2018-2019 OpenCompany, LLC
 
 This program is free software: you can redistribute it and/or modify it under the terms of the GNU Affero General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
 
