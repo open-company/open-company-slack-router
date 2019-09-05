@@ -9,7 +9,7 @@
             [oc.lib.jwt :as jwt]
             [oc.lib.text :as text]
             [oc.lib.html :as html]
-            [oc.lib.user-avatar :as user-avatar]
+            [oc.lib.user :as user-avatar]
             [oc.slack-router.config :as config]))
 
 (defn get-post-options
