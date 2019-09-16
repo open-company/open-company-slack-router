@@ -69,7 +69,7 @@
         (do (reset! usage-go false) (timbre/info "Slack usage reply stopped."))
         (async/thread
           (try
-            (let [body (keywordize-keys (:body message))
+            (let [body (keywordize-keys message)
                   event (:event body)
                   slack-org-id (:team_id body)
                   channel-id (:channel event)]
