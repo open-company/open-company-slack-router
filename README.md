@@ -93,6 +93,7 @@ Make sure you update the `CHANGE-ME` items in the section of the `project.clj` t
     :open-company-slack-verification-token "CHANGE-ME" ;; Found in the slack app configuration.
     :aws-access-key-id "CHANGE-ME"
     :aws-secret-access-key "CHANGE-ME"
+    :aws-sqs-bot-queue "CHANGE-ME"
     :aws-sns-slack-topic-arn "CHANGE-ME" ; SNS topic to publish notifications
     :log-level "debug"
   }
