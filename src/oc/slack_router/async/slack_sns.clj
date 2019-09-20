@@ -53,13 +53,12 @@
   (and text (re-find (re-pattern (str "^" lib-slack/marker-char)) text)))
 
 (defn- from-us? [event]
-  (or (has-marker-char? (:text event))
-      (and (:blocks event)
-           (= (:subtype event) "bot_message"))))
+  (or (has-marker-char? (get event "text"))
+      (and (get event "blocks")
+           (= (get event "subtype") "bot_message"))))
 
 (defn send-trigger! [trigger]
-  ;; Skip it if it's a message from us?
-  (when-not (from-us? trigger)
+  (when-not (from-us? (get trigger "event"))
   
     ;; Is this a DM message to the bot?
     (if (= \D (first (-> trigger (get "event")
