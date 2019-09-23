@@ -44,6 +44,8 @@
 
 ;; ----- AWS -----
 
+(defonce aws-sqs-bot-queue (env :aws-sqs-bot-queue))
+
 (defonce aws-access-key-id (env :aws-access-key-id))
 (defonce aws-secret-access-key (env :aws-secret-access-key))
 

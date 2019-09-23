@@ -2,6 +2,7 @@
   (:require [com.stuartsierra.component :as component]
             [taoensso.timbre :as timbre]
             [org.httpkit.server :as httpkit]
+            [oc.slack-router.async.usage :as usage]
             [oc.slack-router.async.slack-sns :as slack-sns]))
 
 (defrecord HttpKit [options handler server]
@@ -34,6 +35,24 @@
     (timbre/info "[slack-sns] stopped")
     (dissoc component :slack-sns)))
 
+(defrecord UsageReply [usage-reply]
+  component/Lifecycle
+
+  (start [component]
+    (timbre/info "[usage-reply] starting...")
+    (usage/start)
+    (timbre/info "[usage-reply] started")
+    (assoc component :usage-reply true))
+
+  (stop [{:keys [usage-reply] :as component}]
+    (if usage-reply
+      (do
+        (timbre/info "[usage-reply] stopping...")
+        (usage/stop)
+        (timbre/info "[usage-reply] stopped")
+        (dissoc component :usage-reply))
+      component)))
+
 (defrecord Handler [handler-fn]
   component/Lifecycle
   (start [component]
@@ -48,6 +67,9 @@
    :slack-sns (component/using
                 (map->SlackSNS {})
                 [])
+   :usage-reply (component/using
+                  (map->UsageReply {})
+                  [])
    :handler (component/using
              (map->Handler {:handler-fn handler-fn})
              [])
