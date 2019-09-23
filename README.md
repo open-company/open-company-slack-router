@@ -77,7 +77,7 @@ A secret is shared between the Slack Router service and the [Authentication serv
 
 A [Slack App](https://api.slack.com/apps) needs to be created for OAuth authentication and events. For local development, create a Slack app with a Redirect URI of `http://localhost:3003/slack-oauth` and get the client ID and secret from the Slack app you create.  From the /apps url you will be able to chose 'Event Subscriptions' and then turn on the 'Enable Events' toggle.  Once this is turned on the router will begin receiving events from Slack.
 
-An [AWS SNS](https://aws.amazon.com/sns/) pub/sub topic is used to push slack events to interested listeners, such as the [OpenCompany Interaction service](https://github.com/open-company/open-company-interaction) and the [OpenCompany Auth service](https://github.com/open-company/open-company-auth). To take advantage of this capability, configure the `aws-sns-slack-topic-arn` with the ARN (Amazon Resource Name) of an SNS topic you setup in AWS. Then follow the instructions in the other services to subscribe to the SNS topic with an SQS queue.
+An [AWS SNS](https://aws.amazon.com/sns/) pub/sub topic is used to push slack events to interested listeners, such as the [OpenCompany Auth service](https://github.com/open-company/open-company-auth). To take advantage of this capability, configure the `aws-sns-slack-topic-arn` with the ARN (Amazon Resource Name) of an SNS topic you setup in AWS. Then follow the instructions in the other services to subscribe to the SNS topic with an SQS queue.
 
 Make sure you update the `CHANGE-ME` items in the section of the `project.clj` that looks like this to contain your actual JWT, Slack, and AWS secrets:
 
@@ -93,6 +93,7 @@ Make sure you update the `CHANGE-ME` items in the section of the `project.clj` t
     :open-company-slack-verification-token "CHANGE-ME" ;; Found in the slack app configuration.
     :aws-access-key-id "CHANGE-ME"
     :aws-secret-access-key "CHANGE-ME"
+    :aws-sqs-bot-queue "CHANGE-ME"
     :aws-sns-slack-topic-arn "CHANGE-ME" ; SNS topic to publish notifications
     :log-level "debug"
   }

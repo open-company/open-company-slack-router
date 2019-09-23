@@ -49,7 +49,7 @@
     ;; NB: clj-http pulled in manually
     ;; NB: org.clojure/data.json pulled in manually
     ;; NB: http-kit pulled in manually
-    [open-company/lib "0.17.16" :exclusions [clj-http org.clojure/data.json http-kit]]
+    [open-company/lib "0.17.17" :exclusions [clj-http org.clojure/data.json http-kit]]
     ;; In addition to common functions, brings in the following common dependencies used by this project:
     ;; defun - Erlang-esque pattern matching for Clojure functions https://github.com/killme2008/defun
     ;; if-let - More than one binding for if/when macros https://github.com/LockedOn/if-let
@@ -97,7 +97,8 @@
         ;; Static code search for non-idiomatic code https://github.com/jonase/kibit
         ;; NB: rewrite-clj is pulled in manually
         ;; NB: org.clojure/tools.reader pulled in manually
-        [lein-kibit "0.1.7" :exclusions [org.clojure/clojure rewrite-clj org.clojure/tools.reader]]
+        ;; NB: Skip Kibit 0.1.7 as it has a regression: https://github.com/jonase/kibit/issues/231
+        [lein-kibit "0.1.6" :exclusions [org.clojure/clojure rewrite-clj org.clojure/tools.reader]]
         ;; Dependency of lein-kibit and lein-zprint https://github.com/xsc/rewrite-clj
         ;; NB: org.clojure/tools.reader pulled in manually
         [rewrite-clj "0.6.1" :exclusions [org.clojure/tools.reader]]
@@ -114,8 +115,11 @@
         :hot-reload "true" ; reload code when changed on the file system
         :open-company-slack-client-id "CHANGE-ME"
         :open-company-slack-client-secret "CHANGE-ME"
+        :open-company-slack-verification-token "CHANGE-ME" ;; Found in the slack app configuration.
         :aws-access-key-id "CHANGE-ME"
         :aws-secret-access-key "CHANGE-ME"
+        :aws-sqs-bot-queue "CHANGE-ME"
+        :aws-sns-slack-topic-arn "CHANGE-ME" ; SNS topic to publish notifications
         :log-level "debug"
       }
       :plugins [

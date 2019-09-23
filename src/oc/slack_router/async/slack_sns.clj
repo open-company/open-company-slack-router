@@ -6,7 +6,9 @@
             [taoensso.timbre :as timbre]
             [cheshire.core :as json]
             [amazonica.aws.sns :as sns]
-            [oc.slack-router.config :as config]))
+            [oc.lib.slack :as lib-slack]
+            [oc.slack-router.config :as config]
+            [oc.slack-router.async.usage :as usage]))
 
 ;; ----- core.async -----
 
@@ -47,12 +49,30 @@
 
 ;; ----- Event triggering -----
 
+(defn- has-marker-char? [text]
+  (and text (re-find (re-pattern (str "^" lib-slack/marker-char)) text)))
+
+(defn- from-us? [event]
+  (or (has-marker-char? (get event "text"))
+      (and (get event "blocks")
+           (= (get event "subtype") "bot_message"))))
+
 (defn send-trigger! [trigger]
-  (if (clojure.string/blank? config/aws-sns-slack-topic-arn)
-    (timbre/debug "Skipping an event for:" trigger)
-    (do
-      (timbre/debug "Triggering an event for:" trigger)
-      (>!! slack-chan trigger))))
+  (when-not (from-us? (get trigger "event"))
+  
+    ;; Is this a DM message to the bot?
+    (if (= \D (first (-> trigger (get "event")
+                                 (get "channel"))))
+
+      ;; Yes, it's a DM to the bot
+      (>!! usage/usage-chan trigger)
+
+      ;; Not a DM to the bot, so broadcast this to SNS listeners if configured to do so
+      (if (clojure.string/blank? config/aws-sns-slack-topic-arn)
+        (timbre/debug "Skipping an event for:" trigger)
+        (do
+          (timbre/debug "Triggering an event for:" trigger)
+          (>!! slack-chan trigger))))))
 
 ;; ----- Component start/stop -----
 
