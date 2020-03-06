@@ -43,12 +43,12 @@
     [org.clojure/data.json "1.0.0"]
     ;; Clojure wrapper for jsoup HTML parser https://github.com/mfornos/clojure-soup
     [clj-soup/clojure-soup "0.1.3"]
-    
+
     ;; Library for OC projects https://github.com/open-company/open-company-lib
     ;; NB: clj-http pulled in manually
     ;; NB: org.clojure/data.json pulled in manually
     ;; NB: http-kit pulled in manually
-    [open-company/lib "0.17.26-alpha1" :exclusions [clj-http org.clojure/data.json http-kit]]
+    [open-company/lib "0.17.26-alpha1" :exclusions [clj-http org.clojure/data.json]]
     ;; In addition to common functions, brings in the following common dependencies used by this project:
     ;; defun - Erlang-esque pattern matching for Clojure functions https://github.com/killme2008/defun
     ;; if-let - More than one binding for if/when macros https://github.com/LockedOn/if-let
