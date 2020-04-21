@@ -153,6 +153,49 @@ To receive events from the SNS topic with SQS, you will need to subscribe an SQS
 In AWS go to the SQS service console. Click the SQS queue you created. From the
 'Queue Actions' menu, chose 'Subscribe Queue to SNS topic'.
 
+
+## Technical Design
+
+```
+                                                ┌─────────────────────┐                                                
+                                                │                     │                                                
+                                                │        Slack        │                                                
+                                                │                     │                                                
+                                                └─────────────────────┘                                                
+                                                           │                                                           
+                                                           │                                                           
+                                                           │                                                           
+                                                         HTTP                                                          
+                                                           │                                                           
+                                                           │                                                           
+                                                           │                                                           
+                                                           ▼                                                           
+                                        ┌─────────────────────────────────────┐                                        
+                                        │                                     │                                        
+                                        │                                     │                                        
+                                        │                                     │                                        
+                                        │        Slack Router Service         │                                        
+                                        │                                     │                                        
+                                        │                                     │                                        
+                                        │                                     │                                        
+                                        └──────────────────┬──────────────────┘                                        
+                                                           │                                                           
+                                                         HTTP                                                          
+                                                           │                                                           
+           ┌───────────────────────┬───────────────────────┼───────────────────────┬───────────────────────┐           
+           │                       │                       │                       │                    Add post       
+           │                       │                       │                       │                     events        
+           │                       │                       │                       │                       │           
+           ▼                       ▼                       ▼                       ▼                       ▼           
+┌─────────────────────┐ ┌─────────────────────┐ ┌─────────────────────┐ ┌─────────────────────┐ ┌─────────────────────┐
+│                     │ │                     │ │                     │ │SQS                  │ │SNS Topic            │
+│      Slack API      │ │     Auth Service    │ │   Storage Service   │ │                     │ │                     │
+│                     │ │                     │ │                     │ │       oc-bot        │ │       oc-slack      │
+│                     │ │                     │ │                     │ │                     │ │                     │
+└─────────────────────┘ └─────────────────────┘ └─────────────────────┘ └─────────────────────┘ └─────────────────────┘
+```
+
+
 ## Usage
 
 Prospective users of [Carrot](https://carrot.io/) should get started by going to [Carrot.io](https://carrot.io/). The following usage is **for developers** wanting to work on the OpenCompany Slack Router service.
