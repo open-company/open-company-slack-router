@@ -166,6 +166,49 @@ Click the "Save Changes" button.
 NB: Make sure when you are done testing locally, you disable the "Enable Events" toggle and the "Interactivity" toggle so Slack will stop trying to echo events to your local environment via ngrok.
 
 
+
+## Technical Design
+
+```
+                                                ┌─────────────────────┐                                                
+                                                │                     │                                                
+                                                │        Slack        │                                                
+                                                │                     │                                                
+                                                └─────────────────────┘                                                
+                                                           │                                                           
+                                                           │                                                           
+                                                           │                                                           
+                                                         HTTP                                                          
+                                                           │                                                           
+                                                           │                                                           
+                                                           │                                                           
+                                                           ▼                                                           
+                                        ┌─────────────────────────────────────┐                                        
+                                        │                                     │                                        
+                                        │                                     │                                        
+                                        │                                     │                                        
+                                        │        Slack Router Service         │                                        
+                                        │                                     │                                        
+                                        │                                     │                                        
+                                        │                                     │                                        
+                                        └──────────────────┬──────────────────┘                                        
+                                                           │                                                           
+                                                         HTTP                                                          
+                                                           │                                                           
+           ┌───────────────────────┬───────────────────────┼───────────────────────┬───────────────────────┐           
+           │                       │                       │                       │                    Add post       
+           │                       │                       │                       │                     events        
+           │                       │                       │                       │                       │           
+           ▼                       ▼                       ▼                       ▼                       ▼           
+┌─────────────────────┐ ┌─────────────────────┐ ┌─────────────────────┐ ┌─────────────────────┐ ┌─────────────────────┐
+│                     │ │                     │ │                     │ │SQS                  │ │SNS Topic            │
+│      Slack API      │ │     Auth Service    │ │   Storage Service   │ │                     │ │                     │
+│                     │ │                     │ │                     │ │       oc-bot        │ │       oc-slack      │
+│                     │ │                     │ │                     │ │                     │ │                     │
+└─────────────────────┘ └─────────────────────┘ └─────────────────────┘ └─────────────────────┘ └─────────────────────┘
+```
+
+
 ## Usage
 
 Prospective users of [Carrot](https://carrot.io/) should get started by going to [Carrot.io](https://carrot.io/). The following usage is **for developers** wanting to work on the OpenCompany Slack Router service.
@@ -225,7 +268,7 @@ Please note that this project is released with a [Contributor Code of Conduct](h
 
 Distributed under the [GNU Affero General Public License Version 3](https://www.gnu.org/licenses/agpl-3.0.en.html).
 
-Copyright © 2018-2019 OpenCompany, LLC
+Copyright © 2018-2020 OpenCompany, LLC
 
 This program is free software: you can redistribute it and/or modify it under the terms of the GNU Affero General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
 
