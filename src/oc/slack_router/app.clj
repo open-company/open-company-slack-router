@@ -28,7 +28,9 @@
    (uncaughtException [_ thread ex]
      (timbre/error ex "Uncaught exception on" (.getName thread) (.getMessage ex))
      (when c/dsn
-       (sentry/capture c/dsn (-> {:message (.getMessage ex)}
+       (sentry/capture c/dsn (-> {:message (.getMessage ex)
+                                  :environment c/sentry-env
+                                  :release c/sentry-release}
                                  (assoc-in [:extra :exception-data] (ex-data ex))
                                  (sentry-interfaces/stacktrace ex)))))))
 
@@ -54,14 +56,19 @@
     "Trace: " c/liberator-trace "\n"
     "Hot-reload: " c/hot-reload "\n"
     "Log level: " (name c/log-level) "\n"
-    "Sentry: " c/dsn "\n\n"
+    "Sentry: " c/dsn "\n"
+    "  env: " c/sentry-env "\n"
+    (when-not (clojure.string/blank? c/sentry-release)
+      (str "  release: " c/sentry-release "\n"))
+    "\n"
     (when c/intro? "Ready to serve...\n"))))
 
 ;; Ring app definition
 (defn app [sys]
   (cond-> (routes sys)
     c/prod?           api-common/wrap-500 ; important that this is first
-    c/dsn             (sentry-mw/wrap-sentry c/dsn) ; important that this is second
+    c/dsn             (sentry-mw/wrap-sentry c/dsn {:environment c/sentry-env
+                                                    :release c/sentry-release}) ; important that this is second
     c/prod?           wrap-with-logger
     true              wrap-params
     c/liberator-trace (wrap-trace :header :ui)
