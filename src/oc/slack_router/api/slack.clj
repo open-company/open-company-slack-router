@@ -105,7 +105,7 @@
   [request]
   (let [body (:body request)
         type (get body "type")]
-
+    (timbre/info "Slack fire-hose:" type "event" (get-in body ["event" "type"]))
     (cond
      ;; This is a check of the web hook by Slack, echo back the challenge
      (= type "url_verification")
