@@ -19,10 +19,13 @@
 
 (defonce dsn (or (env :open-company-sentry-slack-router) "https://224ba9bc653c4d6ba4894b5faf938fe4@sentry.io/1199370"))
 (defonce sentry-release (or (env :release) ""))
+(defonce sentry-deploy (or (env :sentry-deploy) ""))
 (defonce sentry-env (or (env :environment) "local"))
 (defonce sentry-config {:dsn dsn
                         :release sentry-release
-                        :environment sentry-env})
+                        :environment sentry-env
+                        :deploy sentry-deploy
+                        :debug (not prod?)})
 
 ;; ----- Logging (see https://github.com/ptaoussanis/timbre) -----
 
