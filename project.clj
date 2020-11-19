@@ -54,7 +54,7 @@
     ;; ***************** (JWT schema changes, more info here: *****************
     ;; ******* https://github.com/open-company/open-company-lib/pull/82) ******
     ;; ************************************************************************
-    [open-company/lib "0.17.29-alpha56" :exclusions [clj-http org.clojure/data.json http-kit]]
+    [open-company/lib "0.17.29-alpha57" :exclusions [clj-http org.clojure/data.json http-kit]]
     ;; ************************************************************************
     ;; In addition to common functions, brings in the following common dependencies used by this project:
     ;; defun - Erlang-esque pattern matching for Clojure functions https://github.com/killme2008/defun
