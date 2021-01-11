@@ -183,7 +183,7 @@
                            []
                            slack-users)]
           (if (pos? (count errors?))
-            (throw (ex-info (str "Slack link_shared errors:" (count errors?)) {:errors errors?}))
+            (throw (ex-info (str "Slack link_shared errors:" (count errors?)) {:errors (json/generate-string errors?)}))
             errors?))
         :default
         (slack-sns/send-trigger! body)))

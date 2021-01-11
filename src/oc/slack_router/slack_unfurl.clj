@@ -152,7 +152,7 @@
         author-name-label (str author-name " in " board-name)
         author-avatar (user-avatar/fix-avatar-url config/filestack-api-key (get publisher "avatar-url"))
         url-text (get url "url")
-        thumbnail-data (html/first-body-thumbnail html-body)
+        thumbnail-data (html/first-body-thumbnail html-body false)
         thumbnail-url (if thumbnail-data (:thumbnail thumbnail-data) "")]
     (json/encode {url-text
                   {

@@ -48,7 +48,13 @@
     ;; NB: clj-http pulled in manually
     ;; NB: org.clojure/data.json pulled in manually
     ;; NB: http-kit pulled in manually
-    [open-company/lib "0.17.26-alpha1" :exclusions [clj-http org.clojure/data.json]]
+    ;; ************************************************************************
+    ;; ****************** NB: don't go under 0.17.29-alpha60 ******************
+    ;; ***************** (JWT schema changes, more info here: *****************
+    ;; ******* https://github.com/open-company/open-company-lib/pull/82) ******
+    ;; ************************************************************************
+    [open-company/lib "0.17.29-alpha63" :exclusions [clj-http org.clojure/data.json http-kit]]
+    ;; ************************************************************************
     ;; In addition to common functions, brings in the following common dependencies used by this project:
     ;; defun - Erlang-esque pattern matching for Clojure functions https://github.com/killme2008/defun
     ;; if-let - More than one binding for if/when macros https://github.com/LockedOn/if-let
@@ -194,7 +200,7 @@
 
   :eastwood {
     ;; Disable some linters that are enabled by default
-    ;; contant-test - just seems mostly ill-advised, logical constants are useful in something like a `->cond` 
+    ;; constant-test - just seems mostly ill-advised, logical constants are useful in something like a `->cond`
     ;; wrong-arity - unfortunate, but it's failing on 7/arity of sns/publish
     ;; implicit-dependencies - uhh, just seems dumb
     :exclude-linters [:constant-test :wrong-arity :implicit-dependencies]

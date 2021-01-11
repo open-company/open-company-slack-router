@@ -1,6 +1,7 @@
 (ns oc.slack-router.components
   (:require [com.stuartsierra.component :as component]
             [taoensso.timbre :as timbre]
+            [oc.lib.sentry.core :refer (map->SentryCapturer)]
             [org.httpkit.server :as httpkit]
             [oc.slack-router.async.usage :as usage]
             [oc.slack-router.async.slack-sns :as slack-sns]))
@@ -20,7 +21,7 @@
         (timbre/info "[http] stopping...")
         (server)
         (timbre/info "[http] stopped")
-        (dissoc component :server)))))
+        (assoc component :server nil)))))
 
 (defrecord SlackSNS [slack-sns]
   component/Lifecycle
@@ -33,7 +34,7 @@
     (timbre/info "[slack-sns] stopping...")
     (slack-sns/stop)
     (timbre/info "[slack-sns] stopped")
-    (dissoc component :slack-sns)))
+    (assoc component :slack-sns nil)))
 
 (defrecord UsageReply [usage-reply]
   component/Lifecycle
@@ -50,7 +51,7 @@
         (timbre/info "[usage-reply] stopping...")
         (usage/stop)
         (timbre/info "[usage-reply] stopped")
-        (dissoc component :usage-reply))
+        (assoc component :usage-reply nil))
       component)))
 
 (defrecord Handler [handler-fn]
@@ -60,19 +61,20 @@
     (assoc component :handler (handler-fn component)))
   (stop [component]
     (timbre/info "[handler] stopped")
-    (dissoc component :handler)))
+    (assoc component :handler nil)))
 
-(defn slack-router-system [{:keys [port handler-fn]}]
+(defn slack-router-system [{:keys [port handler-fn sentry]}]
   (component/system-map
+   :sentry-capturer (map->SentryCapturer sentry)
    :slack-sns (component/using
                 (map->SlackSNS {})
-                [])
+                [:sentry-capturer])
    :usage-reply (component/using
                   (map->UsageReply {})
-                  [])
+                  [:sentry-capturer])
    :handler (component/using
              (map->Handler {:handler-fn handler-fn})
-             [])
+             [:sentry-capturer])
    :server  (component/using
              (map->HttpKit {:options {:port port}})
              [:handler])))
