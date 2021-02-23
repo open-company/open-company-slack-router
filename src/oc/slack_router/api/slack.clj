@@ -7,15 +7,16 @@
             [cheshire.core :as json]
             [oc.lib.api.common :as api-common]
             [oc.lib.auth :as auth]
+            [oc.lib.slack :as slack-lib]
             [oc.slack-router.slack-unfurl :as slack-unfurl]
             [oc.slack-router.async.slack-sns :as slack-sns]
             [oc.slack-router.config :as config]))
 
 (defn render-slack-unfurl [token body]
-  (let [event (get body "event")
-        links (get event "links")
-        message_ts (get event "message_ts")
-        channel (get event "channel")]
+  (let [event (:event body)
+        links (:links event)
+        message_ts (:message_ts event)
+        channel (:channel event)]
     (doseq [link links]
       ;; Post back to slack with added info
       (slack-unfurl/unfurl token channel link message_ts))
@@ -63,8 +64,8 @@
   "
   [request]
   (if-let* [payload (:payload request)
-            callback-id (get payload "callback_id")
-            type (get payload "type")]
+            callback-id (:callback_id payload)
+            type (:type payload)]
     (if (or (= type "interactive_message")
             (and (= callback-id "post") (= type "message_action"))
             (and (= callback-id "add_post") (= type "dialog_submission")))
@@ -72,6 +73,36 @@
       (timbre/warn "Unknown Slack action:" type callback-id))
     (timbre/error "No proper payload in Slack action."))
   {:status 200})
+
+(defn- handle-unfurl-event [body slack-user slack-team-id]
+  (if-let [user-token (auth/user-token
+                      {:slack-user-id slack-user
+                       :slack-team-id slack-team-id}
+                      config/auth-server-url
+                      config/passphrase
+                      "Slack Router")]
+    (try
+      [true (render-slack-unfurl user-token body)]
+      (catch Exception e
+        (timbre/info "Exception on Slack unfurl")
+        (timbre/error e)
+        [false e]))
+    (let [emessage (format "Missing jwt token for user: %s %s"
+                           slack-user slack-team-id)]
+      (timbre/info emessage)
+      [false emessage])))
+
+(defn- check-unfurl-users [body slack-users]
+  (let [unfurl-errors (atom [])
+        found? (atom false)]
+    (mapv (fn [su]
+           (when-not @found?
+             (let [[unfurl-outcome unfurl-error] (handle-unfurl-event body (:user_id su) (:team_id su))]
+               (swap! unfurl-errors concat [[unfurl-outcome unfurl-error]])
+               (when unfurl-outcome
+                 (reset! found? true)))))
+     slack-users)
+    @unfurl-errors))
 
 (defn- slack-event-handler
   "
@@ -98,59 +129,55 @@
     }, 
     'type' 'event_callback', 
     'authed_users' ['U06SBTXJR'], 
+    'authorizations' [{ # Always contains 1 user!
+      'enterprise_id' 'E12345',
+      'team_id' 'T12345',
+      'user_id' 'U12345',
+      'is_bot': false
+    }],
+    'event_context' 'EC12345'
     'event_id' 'Ev5B8YSYQ6', 
     'event_time' 1494281750
   }
   "
   [request]
   (let [body (:body request)
-        type (get body "type")]
+        type (:type body)]
 
     (cond
      ;; This is a check of the web hook by Slack, echo back the challenge
      (= type "url_verification")
-     (let [challenge (get body "challenge")]
+     (let [challenge (:challenge body)]
        (timbre/info "Slack challenge:" challenge)
        {:type type :challenge challenge}) ; Slack, we're good
 
      (= type "event_callback")
-     (let [event (get body "event")
-           event-type (get event "type")]
-
+     (let [event (:event body)
+           event-type (:type event)]
        (cond
         (= event-type "link_shared")
         ;; Handle the unfurl request
         ;; https://api.slack.com/docs/message-link-unfurling
-        (let [slack-users (get body "authed_users")
-              slack-team-id (get body "team_id")
-              errors? (reduce ;; iterate through list and stop on first success
-                       (fn [acc slack-user]
-                         (if-let [user-token (auth/user-token
-                                              {:slack-user-id slack-user
-                                               :slack-team-id slack-team-id}
-                                              config/auth-server-url
-                                              config/passphrase
-                                              "Slack Router")]
-                           (try
-                             (render-slack-unfurl user-token body)
-                             (reduced [])
-                             (catch Exception e
-                               (do
-                                 (timbre/error "Exception on slack unfurl: " e)
-                                 (conj acc e))))
-                           (let [emessage (str "Missing jwt token for user: "
-                                               slack-user " "
-                                               slack-team-id)]
-                                 (timbre/info emessage)
-                                 (conj acc emessage))))
-                           []
-                           slack-users)]
-          (if (pos? (count errors?))
-            (throw (ex-info (str "Slack link_shared errors:" (count errors?)) {:errors (json/generate-string errors?)}))
-            errors?))
-        :default
+        (let [team-id (:team_id body)
+              authorizations (:authorizations body)
+              slack-users (:authed_users body)
+              check-users (vec (concat slack-users authorizations))
+              unfurl-results (check-unfurl-users body check-users)]
+          (if (some first unfurl-results)
+            ;; At least one unfurl succeeded already, moving on
+            []
+            (let [event-context (:event_context body)
+                  event-context-data (slack-lib/get-event-parties config/slack-event-context-token event-context)
+                  authorizations-users (:authorizations event-context-data)
+                  other-unfurl-results (check-unfurl-users body (vec authorizations-users))
+                  final-results (vec (concat unfurl-results other-unfurl-results))]
+              (if-not (some first final-results)
+                (let [errors (mapv (comp str second) final-results)]
+                  (throw (ex-info (str "Slack link_shared errors:" (count final-results)) {:errors (json/generate-string errors)})))
+                []))))
+        :else
         (slack-sns/send-trigger! body)))
-     :default
+     :else
      {:status 200})))
 
 ;; ----- Resources - see: http://clojure-liberator.github.io/liberator/assets/img/decision-graph.svg
@@ -172,9 +199,9 @@
     :get (fn [ctx] (api-common/allow-anonymous ctx))
     :post (fn [ctx]
       (dosync
-       (let [body (json/parse-string (slurp (get-in ctx [:request :body])))
-             token (get body "token")
-             challenge (get body "challenge")]
+       (let [body (json/parse-string (slurp (get-in ctx [:request :body])) true)
+             token (:token body "token")
+             challenge (:challenge body)]
          ;; Token check
          (if-not (= token config/slack-verification-token)
            ;; Eghads! It might be a Slack impersonator!
@@ -204,10 +231,10 @@
     :post (fn [ctx]
       (dosync
        (let [params (get-in ctx [:request :params])
-             payload-str (get params "payload")
-             payload (json/parse-string payload-str)
-             token (or (get payload "token")
-                       (get params "token"))] ;; Token is in the params for url verification
+             payload-str (:payload params)
+             payload (json/parse-string payload-str true)
+             token (or (:token payload)
+                       (:token params))] ;; Token is in the params for url verification
          ;; Token check
          (if-not (= token config/slack-verification-token)
            ;; Eghads! It might be a Slack impersonator!

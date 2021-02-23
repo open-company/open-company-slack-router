@@ -70,6 +70,7 @@
 (defonce slack-verification-token (env :open-company-slack-verification-token))
 (defonce slack-client-id (env :open-company-slack-client-id))
 (defonce slack-client-secret (env :open-company-slack-client-secret))
+(defonce slack-event-context-token (env :open-company-slack-event-context-token))
 
 ;; ----- Filestack -----
 
