@@ -199,7 +199,7 @@
     :get (fn [ctx] (api-common/allow-anonymous ctx))
     :post (fn [ctx]
       (dosync
-       (let [body (json/parse-string (slurp (get-in ctx [:request :body])) true)
+       (let [body (-> ctx :request :body slurp (json/parse-string true))
              token (:token body "token")
              challenge (:challenge body)]
          ;; Token check

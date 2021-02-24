@@ -3,6 +3,7 @@
   Async publish of slack events to AWS SNS.
   "
   (:require [clojure.core.async :as async :refer (<! >!!)]
+            [clojure.string :as string]
             [taoensso.timbre :as timbre]
             [cheshire.core :as json]
             [amazonica.aws.sns :as sns]
@@ -53,22 +54,23 @@
   (and text (re-find (re-pattern (str "^" lib-slack/marker-char)) text)))
 
 (defn- from-us? [event]
-  (or (has-marker-char? (get event "text"))
-      (and (get event "blocks")
-           (= (get event "subtype") "bot_message"))))
+  (or (has-marker-char? (:text event))
+      (and (:blocks event)
+           (= (:subtype event) "bot_message"))))
 
 (defn send-trigger! [trigger]
-  (when-not (from-us? (get trigger "event"))
-  
+  (timbre/debug "Slack trigger" trigger)
+  (when-not (from-us? (:event trigger))
+
     ;; Is this a DM message to the bot?
-    (if (= \D (first (-> trigger (get "event")
-                                 (get "channel"))))
+    (if (and (= \D (-> trigger :event :channel first))
+             (not= (-> trigger :event :subtype) "message_changed"))
 
       ;; Yes, it's a DM to the bot
       (>!! usage/usage-chan trigger)
 
       ;; Not a DM to the bot, so broadcast this to SNS listeners if configured to do so
-      (if (clojure.string/blank? config/aws-sns-slack-topic-arn)
+      (if (string/blank? config/aws-sns-slack-topic-arn)
         (timbre/debug "Skipping an event for:" trigger)
         (do
           (timbre/debug "Triggering an event for:" trigger)
@@ -79,7 +81,7 @@
 (defn start
   "Start the core.async event loop."
   []
-  (when-not (clojure.string/blank? config/aws-sns-slack-topic-arn)
+  (when-not (string/blank? config/aws-sns-slack-topic-arn)
     (slack-sns-loop)))
 
 (defn stop
