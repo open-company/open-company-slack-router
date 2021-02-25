@@ -4,6 +4,7 @@
             [taoensso.timbre :as timbre]
             [compojure.core :as compojure :refer (defroutes GET OPTIONS POST)]
             [liberator.core :refer (defresource by-method)]
+            [clojure.string :as string]
             [cheshire.core :as json]
             [oc.lib.api.common :as api-common]
             [oc.lib.auth :as auth]
@@ -74,30 +75,33 @@
     (timbre/error "No proper payload in Slack action."))
   {:status 200})
 
-(defn- handle-unfurl-event [body slack-user slack-team-id]
-  (if-let [user-token (auth/user-token
-                      {:slack-user-id slack-user
-                       :slack-team-id slack-team-id}
-                      config/auth-server-url
-                      config/passphrase
-                      "Slack Router")]
-    (try
-      [true (render-slack-unfurl user-token body)]
-      (catch Exception e
-        (timbre/info "Exception on Slack unfurl")
-        (timbre/error e)
-        [false e]))
-    (let [emessage (format "Missing jwt token for user: %s %s"
-                           slack-user slack-team-id)]
-      (timbre/info emessage)
-      [false emessage])))
+(defn- handle-unfurl-event [body slack-user]
+  (timbre/info "Attempt to get a magic token for Slack user" slack-user)
+  (try
+    (if-let* [slack-user-id (:user_id slack-user)
+              slack-team-id (:team_id slack-user)
+              user-token (auth/user-token
+                          {:slack-user-id slack-user-id
+                           :slack-team-id slack-team-id}
+                          config/auth-server-url
+                          config/passphrase
+                          "Slack Router")
+             unfurl-outcome (render-slack-unfurl user-token body)]
+      [true unfurl-outcome]
+      (let [emessage (format "Missing jwt token for user: %s" slack-user)]
+        (timbre/info emessage)
+        [false emessage]))
+    (catch Exception e
+      (timbre/info "Exception during Slack unfurl attempt")
+      (timbre/error e)
+      [false e])))
 
 (defn- check-unfurl-users [body slack-users]
   (let [unfurl-errors (atom [])
         found? (atom false)]
     (mapv (fn [su]
            (when-not @found?
-             (let [[unfurl-outcome unfurl-error] (handle-unfurl-event body (:user_id su) (:team_id su))]
+             (let [[unfurl-outcome unfurl-error] (handle-unfurl-event body su)]
                (swap! unfurl-errors concat [[unfurl-outcome unfurl-error]])
                (when unfurl-outcome
                  (reset! found? true)))))
@@ -158,23 +162,25 @@
         (= event-type "link_shared")
         ;; Handle the unfurl request
         ;; https://api.slack.com/docs/message-link-unfurling
-        (let [team-id (:team_id body)
-              authorizations (:authorizations body)
+        (let [authorizations (:authorizations body)
               slack-users (:authed_users body)
               check-users (vec (concat slack-users authorizations))
-              unfurl-results (check-unfurl-users body check-users)]
-          (if (some first unfurl-results)
-            ;; At least one unfurl succeeded already, moving on
-            []
-            (let [event-context (:event_context body)
-                  event-context-data (slack-lib/get-event-parties config/slack-event-context-token event-context)
-                  authorizations-users (:authorizations event-context-data)
-                  other-unfurl-results (check-unfurl-users body (vec authorizations-users))
-                  final-results (vec (concat unfurl-results other-unfurl-results))]
-              (if-not (some first final-results)
-                (let [errors (mapv (comp str second) final-results)]
-                  (throw (ex-info (str "Slack link_shared errors:" (count final-results)) {:errors (json/generate-string errors)})))
-                []))))
+              event-links (:links event)]
+          (timbre/infof "Slack link_shared event, trying to unfurl %d links for domains: %s" (count event-links) (string/join ", " (distinct (map :domain event-links))))
+          (timbre/debugf "Links: %s" event-links)
+          (let [unfurl-results (check-unfurl-users body check-users)]
+            (if (some first unfurl-results)
+              ;; At least one unfurl succeeded already, moving on
+              []
+              (let [event-context (:event_context body)
+                    event-context-data (slack-lib/get-event-parties config/slack-event-context-token event-context)
+                    authorizations-users (:authorizations event-context-data)
+                    other-unfurl-results (check-unfurl-users body (vec authorizations-users))
+                    final-results (vec (concat unfurl-results other-unfurl-results))]
+                (if-not (some first final-results)
+                  (let [errors (mapv (comp str second) final-results)]
+                    (throw (ex-info (str "Slack link_shared errors:" (count final-results)) {:errors (json/generate-string errors)})))
+                  [])))))
         :else
         (slack-sns/send-trigger! body)))
      :else
