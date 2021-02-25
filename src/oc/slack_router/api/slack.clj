@@ -108,6 +108,14 @@
      slack-users)
     @unfurl-errors))
 
+(defn- users-from-authed-users [team-id slack-users]
+  (let [compose-fn (fn [su]
+                     (if (string? su)
+                       {:user_id su
+                        :team_id team-id}
+                       su))]
+    (map compose-fn slack-users)))
+
 (defn- slack-event-handler
   "
   Handle a message event from Slack.
@@ -162,8 +170,9 @@
         (= event-type "link_shared")
         ;; Handle the unfurl request
         ;; https://api.slack.com/docs/message-link-unfurling
-        (let [authorizations (:authorizations body)
-              slack-users (:authed_users body)
+        (let [team-id (:team_id body)
+              authorizations (:authorizations body)
+              slack-users (users-from-authed-users team-id (:authed_users body))
               check-users (vec (concat slack-users authorizations))
               event-links (:links event)]
           (timbre/infof "Slack link_shared event, trying to unfurl %d links for domains: %s" (count event-links) (string/join ", " (distinct (map :domain event-links))))
