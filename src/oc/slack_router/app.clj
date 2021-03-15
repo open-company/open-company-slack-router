@@ -39,13 +39,7 @@
     "Trace: " c/liberator-trace "\n"
     "Hot-reload: " c/hot-reload "\n"
     "Log level: " (name c/log-level) "\n"
-    "Sentry: " c/dsn "\n"
-    "  env: " c/sentry-env "\n"
-    "  debug: " (not c/prod?) "\n"
-    (when-not (clojure.string/blank? c/sentry-release)
-      (str "  release: " c/sentry-release "\n"))
-    (when-not (clojure.string/blank? c/sentry-deploy)
-      (str "  deploy: " c/sentry-deploy "\n"))
+    "Sentry: " c/sentry-config "\n"
     "\n"
     (when c/intro? "Ready to serve...\n"))))
 

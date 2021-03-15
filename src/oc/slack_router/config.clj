@@ -15,21 +15,22 @@
 (defonce prod? (= "production" (env :env)))
 (defonce intro? (not prod?))
 
+;; ----- Logging (see https://github.com/ptaoussanis/timbre) -----
+
+(defonce log-level (if-let [ll (env :log-level)] (keyword ll) :info))
+
 ;; ----- Sentry -----
 
 (defonce dsn (or (env :open-company-sentry-slack-router) "https://224ba9bc653c4d6ba4894b5faf938fe4@sentry.io/1199370"))
 (defonce sentry-release (or (env :release) ""))
-(defonce sentry-deploy (or (env :sentry-deploy) ""))
+(defonce sentry-deploy (or (env :deploy) ""))
+(defonce sentry-debug  (boolean (or (bool (env :sentry-debug)) (#{:debug :trace} log-level))))
 (defonce sentry-env (or (env :environment) "local"))
 (defonce sentry-config {:dsn dsn
                         :release sentry-release
                         :environment sentry-env
                         :deploy sentry-deploy
-                        :debug (not prod?)})
-
-;; ----- Logging (see https://github.com/ptaoussanis/timbre) -----
-
-(defonce log-level (or (env :log-level) :info))
+                        :debug sentry-debug})
 
 ;; ----- HTTP server -----
 
