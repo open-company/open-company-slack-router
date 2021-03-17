@@ -26,35 +26,35 @@
        "/orgs/"
        org))
 
-(defn storage-request-section-url
-  [org section]
+(defn storage-request-board-url
+  [org board]
   ;; /orgs/:org-slug/boards/:slug
   (str config/storage-server-url
        "/orgs/"
        org
        "/boards/"
-       section))
+       board))
 
 (defn storage-request-post-url
-  [org section uuid]
+  [org board uuid]
   (str config/storage-server-url
        "/orgs/"
        org
        "/boards/"
-       section
+       board
        "/entries/"
        uuid))
 
 (defn storage-request-secure-uuid-url
-  [org section uuid]
+  [org _board uuid]
   (str config/storage-server-url "/orgs/" org "/entries/" uuid))
 
 (defn get-data
-  [request-url token cb]
+  [url-type request-url token cb]
   (let [{:keys [body error]}
           @(http/get request-url (get-post-options token))]
       (if error
-        (timbre/error "Failed, exception is " error)
+        (timbre/error (ex-info (format "Failed loading data for unfurl: %s" error) {:url request-url :error error :url-type url-type}))
         (let [parsed-body (json/parse-string body true)]
           (cb parsed-body)))))
 
@@ -69,13 +69,13 @@
         org-logo (:logo-url org-data)
         title (str org-name " on Carrot")
         content "Key updates and information nobody should miss."
-        section-count (count (:boards org-data))
+        board-count (count (:boards org-data))
         footer (str org-name
                     " | "
-                    section-count
-                    (if (= 1 section-count)
-                      " section "
-                      " sections "))
+                    board-count
+                    (if (= 1 board-count)
+                      " topic "
+                      " topics "))
         url-text (:url url)]
   (json/encode {url-text
                 {
@@ -144,14 +144,14 @@
                  :actions [{:text "View posts" :type "button" :url url-text}]
                  }})))
 
-(defn section-unfurl-data
-  [url section-data]
-  (let [org-data (:org-data section-data)
+(defn board-unfurl-data
+  [url board-data]
+  (let [org-data (:org-data board-data)
         org-name (:name org-data)
         org-logo (:logo-url org-data)
-        title (:name section-data)
+        title (:name board-data)
         content "Key updates and information nobody should miss."
-        post-count (count (:entries section-data))
+        post-count (count (:entries board-data))
         footer (str title
                     " | "
                     post-count
@@ -169,7 +169,7 @@
                  :footer footer
                  :attachment_type "default"
                  :color (vertical-line-color nil) ;; this can be a hex color
-                 :actions [{:text "View section" :type "button" :url url-text}]
+                 :actions [{:text "View topic" :type "button" :url url-text}]
                  }})))
 
 (defn post-unfurl-data
@@ -220,7 +220,7 @@
                     (all-posts-unfurl-data url data)
 
                     (and (:slug data) (:entries data))
-                    (section-unfurl-data url data)
+                    (board-unfurl-data url data)
 
                     (:contributions data)
                     (contributions-unfurl-data url data)
@@ -262,8 +262,8 @@
      ;;http://carrot.io/carrot/general
      (= 5 split-count)
      {:org org
-      :section (nth split-url 4)
-      :url-type "section"}
+      :board (nth split-url 4)
+      :url-type "board"}
      
 
     ;;http://carrot.io/carrot/u/1234-1234-1234
@@ -276,7 +276,7 @@
      ;;http://carrot.io/carrot/general/post/78ba-40f0-bbb5
      (= 7 split-count)
      {:org org
-      :section (nth split-url 4)
+      :board (nth split-url 4)
       :url-type "post"
       :uuid (nth split-url 6)}
 
@@ -302,23 +302,23 @@
                      (= "secure-uuid" url-type)
                      (storage-request-secure-uuid-url
                       (:org parsed-link)
-                      (:section parsed-link)
+                      (:board parsed-link)
                       (:uuid parsed-link))
 
                      (= "post" url-type)
                      (storage-request-post-url
                       (:org parsed-link)
-                      (:section parsed-link)
+                      (:board parsed-link)
                       (:uuid parsed-link))
 
                      (= "all-posts" url-type)
                      (storage-request-org-url
                       (:org parsed-link))
 
-                     (= "section" url-type)
-                     (storage-request-section-url
+                     (= "board" url-type)
+                     (storage-request-board-url
                       (:org parsed-link)
-                      (:section parsed-link))
+                      (:board parsed-link))
 
                      (= "org" url-type)
                      (storage-request-org-url
@@ -333,37 +333,39 @@
     (when request-url
       (cond
        (= "org" url-type)
-       (get-data request-url token
+       (get-data url-type request-url token
                  (fn [data]
                    (update-slack-url slack-token channel message_ts link data)))
 
        (= "all-posts" url-type)
-       (get-data request-url token
+       (get-data url-type request-url token
                  (fn [org-data]
                    (update-slack-url slack-token channel message_ts link
                                      (assoc org-data :all-posts true :feed-slug (:feed-slug parsed-link)))))
 
-       (= "section" url-type)
-       (get-data (storage-request-org-url (:org parsed-link)) token
+       (= "board" url-type)
+       (get-data url-type (storage-request-org-url (:org parsed-link)) token
                  (fn [org-data]
-                   (get-data request-url token
+                   (get-data url-type request-url token
                              (fn [data]
                                (when-not (= "private" (:access data))
                                  (update-slack-url slack-token channel message_ts link
                                                    (assoc data :org-data org-data)))))))
 
        (= "contributions" url-type)
-       (get-data request-url token
-                  (fn [org-data]
-                    (let [contribs (auth-lib/active-users token config/auth-server-url (:team-id org-data))
-                          contributions-data (some #(when (= (:user-id %) (:contributions-id parsed-link)) %) (-> contribs :collection :items))]
-                      (update-slack-url slack-token channel message_ts link
-                                        (assoc org-data :contributions true :contributions-id (:contributions-id parsed-link) :contributions-data contributions-data)))))
+       (get-data url-type request-url token
+                 (fn [org-data]
+                   (let [contribs (auth-lib/active-users token config/auth-server-url (:team-id org-data))
+                         contributions-data (some #(when (= (:user-id %) (:contributions-id parsed-link)) %) (-> contribs :collection :items))]
+                     (update-slack-url slack-token channel message_ts link
+                                       (assoc org-data :contributions true
+                                                       :contributions-id (:contributions-id parsed-link)
+                                                       :contributions-data contributions-data)))))
         :else
-        (get-data (storage-request-section-url (:org parsed-link) (:section parsed-link)) token
-                  (fn [section-data]
-                    (when-not (= "private" (:access section-data))
-                      (get-data request-url token
+        (get-data url-type (storage-request-board-url (:org parsed-link) (:board parsed-link)) token
+                  (fn [board-data]
+                    (when-not (= "private" (:access board-data))
+                      (get-data url-type request-url token
                                 (fn [data]
                                   (update-slack-url slack-token channel message_ts link
-                                   (assoc data :board-slug (:section parsed-link))))))))))))
+                                   (assoc data :board-slug (:board parsed-link))))))))))))
