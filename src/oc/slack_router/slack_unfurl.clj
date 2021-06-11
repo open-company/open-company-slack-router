@@ -289,14 +289,23 @@
 
      :else nil)))
 
+(defn- bot-token-for-org [slack-org-id jwtoken]
+  (->> jwtoken
+       jwt/decode
+       :claims
+       :slack-bots
+       vals
+       flatten
+       (some #(when (= (:slack-org-id %) slack-org-id)
+                (:token %)))))
+
 (defn unfurl
   "given a url in the form {'url' <link> 'domain' <carrot.io>}
    ask if it is a post and if so query storage service for more info."
-  [token channel link message_ts]
+  [token team-id channel link message_ts]
   ;; split url
   (let [parsed-link (parse-carrot-url link)
-        decoded-token (jwt/decode token)
-        slack-token (:slack-token (:claims decoded-token))
+        slack-token (bot-token-for-org team-id token)
         url-type (:url-type parsed-link)
         request-url (cond
                      (= "secure-uuid" url-type)

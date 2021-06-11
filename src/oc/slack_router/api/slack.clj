@@ -16,11 +16,12 @@
 (defn render-slack-unfurl [token body]
   (let [event (:event body)
         links (:links event)
+        team-id (:team_id body)
         message_ts (:message_ts event)
         channel (:channel event)]
     (doseq [link links]
       ;; Post back to slack with added info
-      (slack-unfurl/unfurl token channel link message_ts))
+      (slack-unfurl/unfurl token team-id channel link message_ts))
     {:status 200 :body (json/generate-string {})}))
 
 (defn- slack-action-handler
@@ -154,7 +155,6 @@
   [request]
   (let [body (:body request)
         type (:type body)]
-
     (cond
      ;; This is a check of the web hook by Slack, echo back the challenge
      (= type "url_verification")
@@ -170,9 +170,13 @@
         ;; Handle the unfurl request
         ;; https://api.slack.com/docs/message-link-unfurling
         (let [team-id (:team_id body)
-              authorizations (:authorizations body)
-              slack-users (users-from-authed-users team-id (:authed_users body))
-              check-users (vec (concat slack-users authorizations))
+              authorized-users (:authorizations body)
+              authed-users (users-from-authed-users team-id (:authed_users body))
+              event-user {:user_id (:user event)
+                          :team_id (:team_id body)}
+              check-users (->> (concat [event-user] authed-users authorized-users)
+                               (remove nil?)
+                               vec)
               event-links (:links event)]
           (timbre/infof "Slack link_shared event, trying to unfurl %d links for domains: %s" (count event-links) (string/join ", " (distinct (map :domain event-links))))
           (timbre/debugf "Links: %s" event-links)
