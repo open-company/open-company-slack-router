@@ -38,7 +38,7 @@
     "SNS Topic ARN: " c/aws-sns-slack-topic-arn "\n"
     "Trace: " c/liberator-trace "\n"
     "Hot-reload: " c/hot-reload "\n"
-    "Log level: " (name c/log-level) "\n"
+    "Log level: " c/log-level "\n"
     "Sentry: " c/sentry-config "\n"
     "\n"
     (when c/intro? "Ready to serve...\n"))))
