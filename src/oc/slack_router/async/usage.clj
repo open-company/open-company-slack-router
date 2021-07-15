@@ -79,6 +79,14 @@
             (catch Exception e
               (timbre/error e)))))))))
 
+(defn send-usage!
+  "Queue a new trigger to send usage message to a Slack channel"
+  ([usage-trigger]
+   (>!! usage-chan usage-trigger))
+
+  ([slack-org-id channel-id]
+   (send-usage! (->trigger slack-org-id channel-id))))
+
 ;; ----- Component start/stop -----
 
 (defn start

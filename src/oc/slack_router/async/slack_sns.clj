@@ -67,7 +67,7 @@
              (not= (-> trigger :event :subtype) "message_changed"))
 
       ;; Yes, it's a DM to the bot
-      (>!! usage/usage-chan trigger)
+      (usage/send-usage! trigger)
 
       ;; Not a DM to the bot, so broadcast this to SNS listeners if configured to do so
       (if (string/blank? config/aws-sns-slack-topic-arn)
