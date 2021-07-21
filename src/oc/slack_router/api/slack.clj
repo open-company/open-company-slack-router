@@ -268,7 +268,7 @@
                (timbre/warn "Slack verification token mismatch, request provided:" token)
                [false, {:reason "Slack verification token mismatch."}])
              [true, {:body body :challenge challenge}])
-           true))))})
+           [true, {:body body}]))))})
 
   ;; Responses
   :post! slack-event-handler
