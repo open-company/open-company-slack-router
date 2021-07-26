@@ -257,8 +257,10 @@
     :options (fn [ctx] (api-common/allow-anonymous ctx))
     :get (fn [ctx] (api-common/allow-anonymous ctx))
     :post (fn [ctx]
+      (println "DBG slack-event received:")
       (dosync
        (let [body (-> ctx :request :body slurp (json/parse-string true))
+             _ (println "DBG   body:" body)
              type (:type body)
              token (:token body "token")
              challenge (:challenge body)]

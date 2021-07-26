@@ -64,21 +64,21 @@
   (async/go (while @usage-go
     (timbre/debug "Slack usage reply waiting...")
     (let [message (<! usage-chan)]
-      (timbre/debug "Processing message on usage channel...")
-      (if (:stop message)
-        (do (reset! usage-go false) (timbre/info "Slack usage reply stopped."))
-        (async/thread
-          (try
+      (try
+        (timbre/debug "Processing message on usage channel...")
+        (if (:stop message)
+          (do (reset! usage-go false) (timbre/info "Slack usage reply stopped."))
+          (async/thread
             (let [body (keywordize-keys message)
                   event (:event body)
                   slack-org-id (:team_id body)
                   channel-id (:channel event)]
               (when (or (= (:type event) "app_home_opened")
                         (and (= (:type event) "message")
-                             (= (:channel_type event) "im")))
-                (handle-message slack-org-id channel-id)))
-            (catch Exception e
-              (timbre/error e)))))))))
+                            (= (:channel_type event) "im")))
+                (handle-message slack-org-id channel-id)))))
+        (catch Exception e
+          (timbre/error e)))))))
 
 (defn send-usage!
   "Queue a new trigger to send usage message to a Slack channel"
