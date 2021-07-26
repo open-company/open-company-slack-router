@@ -73,8 +73,9 @@
                   event (:event body)
                   slack-org-id (:team_id body)
                   channel-id (:channel event)]
-              (when (and (= (:type event) "message")
-                         (= (:channel_type event) "im"))
+              (when (or (= (:type event) "app_home_opened")
+                        (and (= (:type event) "message")
+                             (= (:channel_type event) "im")))
                 (handle-message slack-org-id channel-id)))
             (catch Exception e
               (timbre/error e)))))))))

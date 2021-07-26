@@ -205,6 +205,8 @@
      (let [event (:event body)
            event-type (:type event)]
        (cond
+        (= type "app_home_opened")
+        (app-home-opened-handler body)
         (= event-type "link_shared")
         ;; Handle the unfurl request
         ;; https://api.slack.com/docs/message-link-unfurling
