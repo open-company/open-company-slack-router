@@ -56,7 +56,7 @@
 (defn- handle-message
   [slack-org-id channel-id]
   (timbre/info "Sending usage request to the Bot service...")
-  (send-trigger! (->trigger slack-org-id channel-id true)))
+  (send-trigger! (->trigger slack-org-id channel-id)))
 
 ;; ----- Event loops (incoming from Slack) -----
 
