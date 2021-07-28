@@ -16,6 +16,7 @@
 
 (def UsageTrigger
   {:type (schema/enum :usage)
+   (lib-schema/o-k :avoid-repetition) (schema/maybe schema/Bool)
    :receiver {
       :type (schema/enum :channel)
       :slack-org-id lib-schema/NonBlankStr
@@ -23,12 +24,15 @@
 
 ;; ----- Usage Request Trigger -----
 
-(defn- ->trigger [slack-org-id channel-id]
-  {:type :usage
-   :receiver {
+(defn- ->trigger
+  ([slack-org-id channel-id] (->trigger slack-org-id channel-id false))
+  ([slack-org-id channel-id avoid-repetition?]
+   {:type :usage
+    :avoid-repetition avoid-repetition?
+    :receiver {
       :type :channel
       :slack-org-id slack-org-id
-      :id channel-id}})
+      :id channel-id}}))
 
 (defn- send-trigger! [trigger]
   (schema/validate UsageTrigger trigger) ; sanity check
@@ -52,7 +56,7 @@
 (defn- handle-message
   [slack-org-id channel-id]
   (timbre/info "Sending usage request to the Bot service...")
-  (send-trigger! (->trigger slack-org-id channel-id)))
+  (send-trigger! (->trigger slack-org-id channel-id true)))
 
 ;; ----- Event loops (incoming from Slack) -----
 
@@ -87,6 +91,11 @@
 
   ([slack-org-id channel-id]
    (send-usage! (->trigger slack-org-id channel-id))))
+
+(defn send-usage-no-repetition!
+  "Queue a new trigger to send usage message to a Slack channel only if the last usage wasn't sent lately"
+  [slack-org-id channel-id]
+  (send-usage! (->trigger slack-org-id channel-id true)))
 
 ;; ----- Component start/stop -----
 

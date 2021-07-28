@@ -28,6 +28,30 @@
 (defn- app-home-opened-handler
   "Event:
   {
+    :api_app_id A5TT9AUPQ,
+    :authorizations [{
+      :enterprise_id nil,
+      :team_id T1Q0DD7D5,
+      :user_id U024XQYUSG5,
+      :is_bot true,
+      :is_enterprise_install false
+    }],
+    :type event_callback,
+    :event_id Ev0294EXPGBG,
+    :token uClz2AVHKitL0ExIiNOfB1ox,
+    :event {
+      :type app_home_opened,
+      :user U1Q030LJY,
+      :channel D025DFZEYNM,
+      :tab messages,
+      :event_ts 1627399561.228992
+    },
+    :team_id T1Q0DD7D5,
+    :is_ext_shared_channel false,
+    :event_time 1627399561
+  }
+  In case we have configured the home tab
+  {
     :type 'app_home_opened',
     :user 'U061F7AUR',
     :channel 'D0LAN2Q65',
@@ -54,11 +78,12 @@
       :app_installed_team_id 'T21312902',
       :bot_id 'BSDKSAO2'
     }
-  }"
+  }
+  "
   [body]
   (let [channel (:channel body)
         team-id (:team_id body)]
-    (usage/send-usage! team-id channel)))
+    (usage/send-usage-no-repetition! team-id channel)))
 
 (defn- slack-action-handler
   "
