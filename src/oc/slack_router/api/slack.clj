@@ -216,19 +216,23 @@
   [request]
   (let [body (:body request)
         type (:type body)]
+    (timbre/infof "Handling slack event of type %s" type)
     (cond
      ;; This is a check of the web hook by Slack, echo back the challenge
      (= type "url_verification")
      (let [challenge (:challenge body)]
-       (timbre/info "Slack challenge:" challenge)
+       (timbre/infof "Url verification message, type %s and challenge %s" type challenge)
        {:type type :challenge challenge}) ; Slack, we're good
 
       (= type "app_home_opened")
-      (app-home-opened-handler body)
+      (do
+        (timbre/infof "App home opened message, type: %s" type)
+        (app-home-opened-handler body))
 
      (= type "event_callback")
      (let [event (:event body)
            event-type (:type event)]
+       (timbre/infof "Event callback message, type: %s" event-type)
        (cond
         (= event-type "app_home_opened")
         (app-home-opened-handler body)
@@ -260,7 +264,9 @@
                     (throw (ex-info (str "Slack link_shared errors:" (count final-results)) {:errors (json/generate-string errors)})))
                   [])))))
         :else
-        (slack-sns/send-trigger! body)))
+        (do
+          (timbre/infof "Routing message through slack-sns, event type: %s" event-type)
+          (slack-sns/send-trigger! body))))
      :else
      {:status 200})))
 
