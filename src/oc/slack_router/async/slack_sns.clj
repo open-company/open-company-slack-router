@@ -71,9 +71,9 @@
 
       ;; Not a DM to the bot, so broadcast this to SNS listeners if configured to do so
       (if (string/blank? config/aws-sns-slack-topic-arn)
-        (timbre/info "Skipping an event for:" trigger)
+        (timbre/debug "Skipping an event for:" trigger)
         (do
-          (timbre/info "Triggering an event for:" trigger)
+          (timbre/debug "Triggering an event for:" trigger)
           (>!! slack-chan trigger))))))
 
 ;; ----- Component start/stop -----

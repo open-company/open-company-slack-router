@@ -25,6 +25,17 @@
       (slack-unfurl/unfurl token team-id channel link message_ts))
     {:status 200 :body (json/generate-string {})}))
 
+(defn- channel-from-event [body]
+  (or ;; In case of app_home_opened event we have the user id in the root
+      (:user body)
+      ;;  in case of a callback event we have it in the event key
+      (-> body :event :user)
+      ;; if that's not present let's get the user_id of the first non bot user in the authorizations list
+      (and (:authorizations body)
+           (some #(and (not (:is_bot %)) (:user_id %)) (:authorizations body)))
+      ;; final fallback on the channel passed with the event
+      (:channel body)))
+
 (defn- app-home-opened-handler
   "Event:
   {
@@ -81,7 +92,7 @@
   }
   "
   [body]
-  (let [channel (:channel body)
+  (let [channel (channel-from-event body)
         team-id (:team_id body)]
     (usage/send-usage-no-repetition! team-id channel)))
 
