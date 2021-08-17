@@ -274,7 +274,8 @@
                   (let [errors (mapv (comp str second) final-results)]
                     (throw (ex-info (str "Slack link_shared errors:" (count final-results)) {:errors (json/generate-string errors)})))
                   [])))))
-        :else
+        ;; avoid reacting to user_changed events to avoid saturating the router
+        (not= event-type "user_changed")
         (do
           (timbre/infof "Routing message through slack-sns, event type: %s" event-type)
           (slack-sns/send-trigger! body))))
