@@ -76,10 +76,13 @@
             (let [body (keywordize-keys message)
                   event (:event body)
                   slack-org-id (:team_id body)
-                  channel-id (:channel event)]
+                  is-im-message? (and (= (:type event) "message")
+                                      (= (:channel_type event) "im"))
+                  channel-id (if is-im-message?
+                               (:user event)
+                               (:channel event))]
               (when (or (= (:type event) "app_home_opened")
-                        (and (= (:type event) "message")
-                            (= (:channel_type event) "im")))
+                        is-im-message?)
                 (handle-message slack-org-id channel-id)))))
         (catch Exception e
           (timbre/error e)))))))
