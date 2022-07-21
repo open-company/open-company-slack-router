@@ -163,9 +163,11 @@
       [true unfurl-outcome]
       (let [emessage (format "Missing jwt token for user: %s" slack-user)]
         (timbre/warn emessage)
+        (timbre/error (ex-info emessage {:slack-user slack-user}))
         [false emessage]))
     (catch Exception e
       (timbre/warnf "Exception during Slack unfurl attempt: %s. Cause: %s" (ex-message e) (ex-cause e))
+      (timbre/error e)
       [false e])))
 
 (defn- check-unfurl-users [body slack-users]
