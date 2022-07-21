@@ -299,13 +299,23 @@
        (some #(when (= (:slack-org-id %) slack-org-id)
                 (:token %)))))
 
+(defn- user-token-for-org [slack-org-id jwtoken]
+  (->> jwtoken
+       jwt/decode
+       :claims
+       :slack-users
+       vals
+       flatten
+       (some #(when (= (:slack-org-id %) slack-org-id)
+                (:token %)))))
+
 (defn unfurl
   "given a url in the form {'url' <link> 'domain' <carrot.io>}
    ask if it is a post and if so query storage service for more info."
   [token team-id channel link message_ts]
   ;; split url
   (let [parsed-link (parse-carrot-url link)
-        slack-token (bot-token-for-org team-id token)
+        slack-token (or (bot-token-for-org team-id token) (user-token-for-org team-id token))
         _ (timbre/tracef "link %s team-id %s token %s" link team-id token)
         _ (timbre/tracef "parsed-link %s slack-token %s" parsed-link slack-token)
         url-type (:url-type parsed-link)
