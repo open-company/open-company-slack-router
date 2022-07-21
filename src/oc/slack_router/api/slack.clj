@@ -165,7 +165,7 @@
         (timbre/tracef "Handle unfurl event success: slack user-id %s slack team-id %s user token %s unfurl outcome %s" slack-user-id slack-team-id user-token unfurl-outcome)
         [true unfurl-outcome])
       (let [emessage (format "Missing jwt token for user: %s" slack-user)]
-        (timbre/tracef "Handle unfurl event error: slack user-id %s slack team-id %s user token %s" slack-user-id slack-team-id user-token)
+        (timbre/tracef "Handle unfurl event error: slack user-id %s slack team-id %s" (:user_id slack-user) (:team_id slack-user))
         (timbre/warn emessage)
         [false emessage]))
     (catch Exception e
