@@ -160,10 +160,12 @@
                           config/auth-server-url
                           config/passphrase
                           "Slack Router")
-             _ (timbre/trace "Retrieved token %s" user-token)
              unfurl-outcome (render-slack-unfurl user-token body)]
-      [true unfurl-outcome]
+      (do
+        (timbre/tracef "Handle unfurl event success: slack user-id %s slack team-id %s user token %s unfurl outcome %s" slack-user-id slack-team-id user-token unfurl-outcome)
+        [true unfurl-outcome])
       (let [emessage (format "Missing jwt token for user: %s" slack-user)]
+        (timbre/tracef "Handle unfurl event error: slack user-id %s slack team-id %s user token %s unfurl outcome %s" slack-user-id slack-team-id user-token unfurl-outcome)
         (timbre/warn emessage)
         [false emessage]))
     (catch Exception e
