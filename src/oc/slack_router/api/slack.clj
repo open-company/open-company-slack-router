@@ -20,6 +20,7 @@
         team-id (:team_id body)
         message_ts (:message_ts event)
         channel (:channel event)]
+    (timbre/trace "Slack unfurl request with token %s and body %s" token body)
     (doseq [link links]
       ;; Post back to slack with added info
       (slack-unfurl/unfurl token team-id channel link message_ts))
@@ -159,6 +160,7 @@
                           config/auth-server-url
                           config/passphrase
                           "Slack Router")
+             _ (timbre/trace "Retrieved token %s" user-token)
              unfurl-outcome (render-slack-unfurl user-token body)]
       [true unfurl-outcome]
       (let [emessage (format "Missing jwt token for user: %s" slack-user)]
