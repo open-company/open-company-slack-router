@@ -175,10 +175,7 @@
 (defn post-unfurl-data
   [url post-data]
   (let [html-body (:body post-data)
-        content (.text (soup/parse html-body))
-        reduced-content (text/truncated-body content)
         headline (.text (soup/parse (:headline post-data)))
-        abstract (some-> (:abstract post-data) soup/parse .text)
         must-see (:must-see post-data)
         title (if must-see
                 (str "[Must see] " headline)
@@ -197,7 +194,6 @@
                    :author_icon author-avatar
                    :title title
                    :title_link url-text
-                   :text (if (string/blank? abstract) reduced-content abstract)
                    :thumb_url thumbnail-url
                    :attachment_type "default"
                    :color (vertical-line-color post-data) ;; this can be a hex color
@@ -234,6 +230,8 @@
        (when url-data (slack-lib/unfurl-post-url token channel ts url-data))))))
 
 (defn parse-carrot-url [url]
+  (when-not (string? (:url url))
+    (timbre/infof "Parse carrot url with non string url: %s, url type %s, inner url type %s" url (type url) (type (:url url))))
   (let [split-url (string/split (:url url) #"/")
         split-count (count split-url)
         org (when (> split-count 3) (nth split-url 3))]
