@@ -9,7 +9,6 @@
             [oc.lib.slack :as slack-lib]
             [oc.lib.auth :as auth-lib]
             [oc.lib.jwt :as jwt]
-            [oc.lib.text :as text]
             [oc.lib.html :as html]
             [oc.lib.user :as user-lib]
             [oc.slack-router.config :as config]))
@@ -302,6 +301,8 @@
    ask if it is a post and if so query storage service for more info."
   [token team-id channel link message_ts]
   ;; split url
+  (when-not (string? token)
+    (timbre/infof "Token not valud for unfurl %s" token))
   (let [parsed-link (parse-carrot-url link)
         slack-token (bot-token-for-org team-id token)
         url-type (:url-type parsed-link)
