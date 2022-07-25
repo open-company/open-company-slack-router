@@ -156,9 +156,7 @@
                          config/passphrase
                          "Slack Router")]
     (timbre/debugf "Attempt to retrieve user token with slack user %s" slack-user)
-    (if (and (map? user-token-resp)
-             (not (:error user-token-resp))
-             (<= 200 (:status user-token-resp) 299))
+    (if (string? user-token-resp)
       user-token-resp
       (throw (ex-info "Failed retrieving user token" {:slack-user slack-user :user-token-resp user-token-resp})))))
 
