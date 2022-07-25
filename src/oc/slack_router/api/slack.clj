@@ -148,18 +148,25 @@
     (timbre/error "No proper payload in Slack action."))
   {:status 200})
 
+(defn- get-user-token [{slack-user-id :user_id slack-team-id :team_id :as slack-user}]
+  (let [user-token-resp (auth/user-token
+                         {:slack-user-id slack-user-id
+                          :slack-team-id slack-team-id}
+                         config/auth-server-url
+                         config/passphrase
+                         "Slack Router")]
+    (timbre/debugf "Attempt to retrieve user token with slack user %s" slack-user)
+    (if (and (map? user-token-resp)
+             (not (:error user-token-resp))
+             (<= 200 (:status user-token-resp) 299))
+      user-token-resp
+      (throw (ex-info "Failed retrieving user token" {:slack-user slack-user :user-token-resp user-token-resp})))))
+
 (defn- handle-unfurl-event [body slack-user]
   (timbre/info "Attempt to get a magic token for Slack user" slack-user)
   (try
-    (if-let* [slack-user-id (:user_id slack-user)
-              slack-team-id (:team_id slack-user)
-              user-token (auth/user-token
-                          {:slack-user-id slack-user-id
-                           :slack-team-id slack-team-id}
-                          config/auth-server-url
-                          config/passphrase
-                          "Slack Router")
-             unfurl-outcome (render-slack-unfurl user-token body)]
+    (if-let* [user-token (get-user-token slack-user)
+              unfurl-outcome (render-slack-unfurl user-token body)]
       [true unfurl-outcome]
       (let [emessage (format "Missing jwt token for user: %s" slack-user)]
         (timbre/warn emessage)
