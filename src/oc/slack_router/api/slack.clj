@@ -197,6 +197,16 @@
                        su))]
     (map compose-fn slack-users)))
 
+(defn users-from-authorizations [{event :event authorizations :authorizations}]
+  (let [event-user (:user event)]
+    (map (fn [authorization]
+           (if (and (:is_bot authorization) event-user)
+             (-> authorization
+                 (assoc :bot_user_id (:user_id authorization))
+                 (assoc :user_id event-user))
+             authorization))
+         authorizations)))
+
 (defn- slack-event-handler
   "
   Handle a message event from Slack.
@@ -222,7 +232,7 @@
     }, 
     'type' 'event_callback', 
     'authed_users' ['U06SBTXJR'], 
-    'authorizations' [{ # Always contains 1 user!
+    'authorizations' [{ # Always contains 1 user! if the user is bot, we replace it with the `user` from :event
       'enterprise_id' 'E12345',
       'team_id' 'T12345',
       'user_id' 'U12345',
@@ -260,7 +270,7 @@
         ;; Handle the unfurl request
         ;; https://api.slack.com/docs/message-link-unfurling
         (let [team-id (:team_id body)
-              authorized-users (:authorizations body)
+              authorized-users (users-from-authorizations body)
               authed-users (users-from-authed-users team-id (:authed_users body))
               event-user {:user_id (:user event)
                           :team_id (:team_id body)}
