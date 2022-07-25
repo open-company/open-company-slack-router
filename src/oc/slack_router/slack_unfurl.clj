@@ -178,11 +178,6 @@
         content (.text (soup/parse html-body))
         reduced-content (text/truncated-body content)
         headline (.text (soup/parse (:headline post-data)))
-        abstract (some-> (:abstract post-data) soup/parse .text)
-        must-see (:must-see post-data)
-        title (if must-see
-                (str "[Must see] " headline)
-                headline)
         board-name (:board-name post-data)
         publisher (:publisher post-data)
         author-name (user-lib/name-for publisher)
@@ -195,9 +190,9 @@
                   {
                    :author_name author-name-label
                    :author_icon author-avatar
-                   :title title
+                   :title headline
                    :title_link url-text
-                   :text (if (string/blank? abstract) reduced-content abstract)
+                   :text reduced-content
                    :thumb_url thumbnail-url
                    :attachment_type "default"
                    :color (vertical-line-color post-data) ;; this can be a hex color
