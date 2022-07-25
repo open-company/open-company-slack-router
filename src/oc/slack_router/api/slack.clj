@@ -20,8 +20,10 @@
         team-id (:team_id body)
         message_ts (:message_ts event)
         channel (:channel event)]
+    (timbre/debugf "About to unfurl links %s with token %s. Full body %s" links token body)
     (doseq [link links]
       ;; Post back to slack with added info
+      (timbre/infof "Unfurl request for %s channel %s team-id %s message_ts %s" link channel team-id message_ts)
       (slack-unfurl/unfurl token team-id channel link message_ts))
     {:status 200 :body (json/generate-string {})}))
 
