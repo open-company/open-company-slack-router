@@ -268,6 +268,7 @@
                                (remove nil?)
                                vec)
               event-links (:links event)]
+          (timbre/tracef "Slack event event_callback with type link_shared. Full payload %s" body)
           (timbre/infof "Slack link_shared event, trying to unfurl %d links for domains: %s" (count event-links) (string/join ", " (distinct (map :domain event-links))))
           (timbre/debugf "Links: %s" event-links)
           (let [unfurl-results (check-unfurl-users body check-users)]
