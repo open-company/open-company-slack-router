@@ -302,7 +302,7 @@
   [token team-id channel link message_ts]
   ;; split url
   (when-not (string? token)
-    (timbre/infof "Token not valud for unfurl %s" token))
+    (timbre/infof "Token not valid for unfurl %s" token))
   (let [parsed-link (parse-carrot-url link)
         slack-token (bot-token-for-org team-id token)
         url-type (:url-type parsed-link)

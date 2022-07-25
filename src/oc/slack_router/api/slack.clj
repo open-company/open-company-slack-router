@@ -155,7 +155,7 @@
                          config/auth-server-url
                          config/passphrase
                          "Slack Router")]
-    (timbre/debugf "Attempt to retrieve user token with slack user %s" slack-user)
+    (timbre/debugf "Attempt to retrieve user token with slack user %s, response %s" slack-user user-token-resp)
     (if (string? user-token-resp)
       user-token-resp
       (throw (ex-info "Failed retrieving user token" {:slack-user slack-user :user-token-resp user-token-resp})))))
