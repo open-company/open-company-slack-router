@@ -200,11 +200,13 @@
 (defn users-from-authorizations [{event :event authorizations :authorizations}]
   (let [event-user (:user event)]
     (map (fn [authorization]
-           (if (and (:is_bot authorization) event-user)
-             (-> authorization
-                 (assoc :bot_user_id (:user_id authorization))
-                 (assoc :user_id event-user))
-             authorization))
+           (let [updated-auth (if (and (:is_bot authorization) event-user)
+                                (-> authorization
+                                    (assoc :bot_user_id (:user_id authorization))
+                                    (assoc :user_id event-user))
+                                authorization)]
+             (timbre/tracef "Authorization adjustment, event %s authorization %s. Updated auth: %s" event authorization updated-auth)
+             updated-auth))
          authorizations)))
 
 (defn- slack-event-handler
