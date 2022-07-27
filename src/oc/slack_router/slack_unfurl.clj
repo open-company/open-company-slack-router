@@ -373,7 +373,8 @@
         :else
         (get-data url-type (storage-request-board-url (:org parsed-link) (:board parsed-link)) token
                   (fn [board-data]
-                    (when-not (= "private" (:access board-data))
+                    (if (= "private" (:access board-data))
+                      (timbre/warnf "Skipping unfurl for post %s, board %s has %s access" (:uuid parsed-link) (:board-uuid parsed-link) (:access board-data))
                       (get-data url-type request-url token
                                 (fn [data]
                                   (update-slack-url slack-token channel message_ts link
