@@ -205,8 +205,8 @@
    Also see open-company-lib for slack unfurl function.
   "
   [token channel ts url data]
-  (when data
-    (let [url-data (cond
+  (let [url-data (when data
+                   (cond
 
                     (and (:headline data) (:body data))
                     (post-unfurl-data url data)
@@ -224,9 +224,14 @@
                     (org-unfurl-data url data)
 
                     :else
-                    false)]
-      (timbre/info
-       (when url-data (slack-lib/unfurl-post-url token channel ts url-data))))))
+                    false))
+        unfurl-response (when url-data
+                          (slack-lib/unfurl-post-url token channel ts url-data))]
+    (if unfurl-response
+      (do
+        (timbre/infof "Slack unfurl did complete, output: %s" unfurl-response)
+        unfurl-response)
+      (timbre/errorf "Slack unfurl did NOT complete, data:\n%s\nurl-data:\n%s\nunfurl-response:\n%s" data url-data unfurl-response))))
 
 (defn parse-carrot-url [url]
   (let [split-url (string/split (:url url) #"/")
