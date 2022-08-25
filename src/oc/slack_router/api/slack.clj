@@ -21,6 +21,7 @@
         message_ts (:message_ts event)
         channel (:channel event)]
     (doseq [link links]
+      (timbre/infof "Unfurl request for %s channel %s team-id %s message_ts %s" link channel team-id message_ts)
       ;; Post back to slack with added info
       (slack-unfurl/unfurl token team-id channel link message_ts))
     {:status 200 :body (json/generate-string {})}))
@@ -96,6 +97,19 @@
         team-id (:team_id body)]
     (usage/send-usage-no-repetition! team-id channel)))
 
+(defn- get-user-token [{slack-user-id :user_id slack-team-id :team_id :as slack-user}]
+  (let [user-token-resp (auth/user-token
+                         {:slack-user-id slack-user-id
+                          :slack-team-id slack-team-id}
+                         config/auth-server-url
+                         config/passphrase
+                         "Slack Router")]
+    (timbre/debugf "Attempt to retrieve user token with slack user %s, response %s" slack-user user-token-resp)
+    (if (string? user-token-resp)
+      user-token-resp
+      (throw (ex-info "Failed retrieving user token" {:slack-user slack-user :user-token-resp user-token-resp})))))
+
+
 (defn- slack-action-handler
   "
   https://api.slack.com/actions
@@ -151,21 +165,16 @@
 (defn- handle-unfurl-event [body slack-user]
   (timbre/info "Attempt to get a magic token for Slack user" slack-user)
   (try
-    (if-let* [slack-user-id (:user_id slack-user)
-              slack-team-id (:team_id slack-user)
-              user-token (auth/user-token
-                          {:slack-user-id slack-user-id
-                           :slack-team-id slack-team-id}
-                          config/auth-server-url
-                          config/passphrase
-                          "Slack Router")
-             unfurl-outcome (render-slack-unfurl user-token body)]
+    (if-let* [user-token (get-user-token slack-user)
+              unfurl-outcome (render-slack-unfurl user-token body)]
       [true unfurl-outcome]
       (let [emessage (format "Missing jwt token for user: %s" slack-user)]
         (timbre/warn emessage)
+        (timbre/error (ex-info emessage {:slack-user slack-user}))
         [false emessage]))
     (catch Exception e
       (timbre/warnf "Exception during Slack unfurl attempt: %s. Cause: %s" (ex-message e) (ex-cause e))
+      (timbre/error e)
       [false e])))
 
 (defn- check-unfurl-users [body slack-users]
@@ -187,6 +196,18 @@
                         :team_id team-id}
                        su))]
     (map compose-fn slack-users)))
+
+(defn users-from-authorizations [{event :event authorizations :authorizations}]
+  (let [event-user (:user event)]
+    (map (fn [authorization]
+           (let [updated-auth (if (and (:is_bot authorization) event-user)
+                                (-> authorization
+                                    (assoc :bot_user_id (:user_id authorization))
+                                    (assoc :user_id event-user))
+                                authorization)]
+             (timbre/tracef "Authorization adjustment, event %s authorization %s. Updated auth: %s" event authorization updated-auth)
+             updated-auth))
+         authorizations)))
 
 (defn- slack-event-handler
   "
@@ -213,7 +234,7 @@
     }, 
     'type' 'event_callback', 
     'authed_users' ['U06SBTXJR'], 
-    'authorizations' [{ # Always contains 1 user!
+    'authorizations' [{ # Always contains 1 user! if the user is bot, we replace it with the `user` from :event
       'enterprise_id' 'E12345',
       'team_id' 'T12345',
       'user_id' 'U12345',
@@ -251,7 +272,7 @@
         ;; Handle the unfurl request
         ;; https://api.slack.com/docs/message-link-unfurling
         (let [team-id (:team_id body)
-              authorized-users (:authorizations body)
+              authorized-users (users-from-authorizations body)
               authed-users (users-from-authed-users team-id (:authed_users body))
               event-user {:user_id (:user event)
                           :team_id (:team_id body)}

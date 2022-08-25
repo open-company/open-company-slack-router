@@ -178,11 +178,6 @@
         content (.text (soup/parse html-body))
         reduced-content (text/truncated-body content)
         headline (.text (soup/parse (:headline post-data)))
-        abstract (some-> (:abstract post-data) soup/parse .text)
-        must-see (:must-see post-data)
-        title (if must-see
-                (str "[Must see] " headline)
-                headline)
         board-name (:board-name post-data)
         publisher (:publisher post-data)
         author-name (user-lib/name-for publisher)
@@ -195,9 +190,9 @@
                   {
                    :author_name author-name-label
                    :author_icon author-avatar
-                   :title title
+                   :title headline
                    :title_link url-text
-                   :text (if (string/blank? abstract) reduced-content abstract)
+                   :text reduced-content
                    :thumb_url thumbnail-url
                    :attachment_type "default"
                    :color (vertical-line-color post-data) ;; this can be a hex color
@@ -210,8 +205,8 @@
    Also see open-company-lib for slack unfurl function.
   "
   [token channel ts url data]
-  (when data
-    (let [url-data (cond
+  (let [url-data (when data
+                   (cond
 
                     (and (:headline data) (:body data))
                     (post-unfurl-data url data)
@@ -229,9 +224,14 @@
                     (org-unfurl-data url data)
 
                     :else
-                    false)]
-      (timbre/info
-       (when url-data (slack-lib/unfurl-post-url token channel ts url-data))))))
+                    false))
+        unfurl-response (when url-data
+                          (slack-lib/unfurl-post-url token channel ts url-data))]
+    (if unfurl-response
+      (do
+        (timbre/infof "Slack unfurl did complete, output: %s" unfurl-response)
+        unfurl-response)
+      (timbre/errorf "Slack unfurl did NOT complete, data:\n%s\nurl-data:\n%s\nunfurl-response:\n%s" data url-data unfurl-response))))
 
 (defn parse-carrot-url [url]
   (let [split-url (string/split (:url url) #"/")
@@ -373,7 +373,8 @@
         :else
         (get-data url-type (storage-request-board-url (:org parsed-link) (:board parsed-link)) token
                   (fn [board-data]
-                    (when-not (= "private" (:access board-data))
+                    (if (= "private" (:access board-data))
+                      (timbre/warnf "Skipping unfurl for post %s, board %s has %s access" (:uuid parsed-link) (:board-uuid parsed-link) (:access board-data))
                       (get-data url-type request-url token
                                 (fn [data]
                                   (update-slack-url slack-token channel message_ts link
