@@ -53,7 +53,7 @@
     ;; ***************** (JWT schema changes, more info here: *****************
     ;; ******* https://github.com/open-company/open-company-lib/pull/82) ******
     ;; ************************************************************************
-    [open-company/lib "0.19.0-alpha5" :exclusions [org.jsoup/jsoup riddley commons-codec clj-http org.apache.httpcomponents/httpclient org.clojure/data.json org.clojure/tools.logging]]
+    [open-company/lib "0.20.3-alpha2" :exclusions [org.jsoup/jsoup riddley commons-codec clj-http org.apache.httpcomponents/httpclient org.clojure/data.json org.clojure/tools.logging]]
     ;; ************************************************************************
     ;; In addition to common functions, brings in the following common dependencies used by this project:
     ;; defun - Erlang-esque pattern matching for Clojure functions https://github.com/killme2008/defun
@@ -184,18 +184,20 @@
     :timeout 120000
   }
 
-  :aliases{
-    "build" ["do" "clean," "deps," "compile"] ; clean and build code
-    "start" ["do" "run" "-m" "oc.slack-router.app"] ; start a development server
-    "start!" ["with-profile" "prod" "do" "start"] ; start a server in production
-    "midje!" ["with-profile" "qa" "midje"] ; run all tests
-    "test!" ["with-profile" "qa" "do" "clean," "build," "midje"] ; build, init the DB and run all tests
-    "autotest" ["with-profile" "qa" "midje" ":autotest"] ; watch for code changes and run affected tests
-    "repl" ["with-profile" "+repl-config" "repl"]
-    "spell!" ["spell" "-n"] ; check spelling in docs and docstrings
-    "bikeshed!" ["bikeshed" "-v" "-m" "120"] ; code check with max line length warning of 120 characters
-    "ancient" ["ancient" ":all" ":allow-qualified"] ; check for out of date dependencies
-  }
+  :aliases{"build" ["do" "clean," "deps," "compile"] ; clean and build code
+           "create-migration" ["run" "-m" "oc.slack-router.db.migrations" "create"] ; create a data migration
+           "migrate-db" ["run" "-m" "oc.slack-router.db.migrations" "migrate"] ; run pending data migrations       
+           "start*" ["do" "migrate-db," "run" "-m" "oc.slack-router.app"] ; start the service
+           "start" ["with-profile" "dev" "do" "start*"] ; start a development server
+           "start!" ["with-profile" "prod" "do" "start*"] ; start a server in production
+           "midje!" ["with-profile" "qa" "midje"] ; run all tests
+           "test!" ["with-profile" "qa" "do" "clean," "build," "migrate-db," "midje"] ; run all tests
+           "autotest" ["with-profile" "qa" "do" "migrate-db," "midje" ":autotest"] ; watch for code changes and run affected tests
+           "repl" ["with-profile" "+repl-config" "repl"]
+           "spell!" ["spell" "-n"] ; check spelling in docs and docstrings
+           "bikeshed!" ["bikeshed" "-v" "-m" "120"] ; code check with max line length warning of 120 characters
+           "ancient" ["ancient" ":all" ":allow-qualified"] ; check for out of date dependencies
+           }
   
   ;; ----- Code check configuration -----
 

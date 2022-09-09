@@ -12,6 +12,7 @@
             [oc.lib.text :as text]
             [oc.lib.html :as html]
             [oc.lib.user :as user-lib]
+            [oc.slack-router.resources.private-unfurl :as private-unfurl]
             [oc.slack-router.config :as config]))
 
 (defn get-post-options
@@ -58,11 +59,6 @@
         (let [parsed-body (json/parse-string body true)]
           (cb parsed-body)))))
 
-(defn- vertical-line-color [post-data]
-  (if (:must-see post-data)
-    "#6187F8"
-    "#E8E8E8"))
-
 (defn org-unfurl-data
   [url org-data]
   (let [org-name (:name org-data)
@@ -86,7 +82,7 @@
                  :text content
                  :footer footer
                  :attachment_type "default"
-                 :color (vertical-line-color nil) ;; this can be a hex color
+                 :color "#E8E8E8"
                  :actions [{:text "View org" :type "button" :url url-text}]
                  }})))
 
@@ -113,7 +109,7 @@
                    :text content
                    :footer footer
                    :attachment_type "default"
-                   :color (vertical-line-color nil) ;; this can be a hex color
+                   :color "#E8E8E8"
                    :actions [{:text "View user" :type "button" :url url-text}]}})))
 
 (defn all-posts-unfurl-data
@@ -140,7 +136,7 @@
                  :title_link url-text
                  :text feed-description
                  :attachment_type "default"
-                 :color (vertical-line-color nil) ;; this can be a hex color
+                 :color "#E8E8E8"
                  :actions [{:text "View posts" :type "button" :url url-text}]
                  }})))
 
@@ -168,7 +164,7 @@
                  :text content
                  :footer footer
                  :attachment_type "default"
-                 :color (vertical-line-color nil) ;; this can be a hex color
+                 :color "#E8E8E8"
                  :actions [{:text "View topic" :type "button" :url url-text}]
                  }})))
 
@@ -195,43 +191,46 @@
                    :text reduced-content
                    :thumb_url thumbnail-url
                    :attachment_type "default"
-                   :color (vertical-line-color post-data) ;; this can be a hex color
+                   :color "#E8E8E8"
                    :actions [{:text "View post" :type "button" :url url-text}]
                    }})))
+
+(defn unfurl-content
+  [url data]
+  (when data
+    (cond
+
+      (and (:headline data) (:body data))
+      (post-unfurl-data url data)
+
+      (:all-posts data)
+      (all-posts-unfurl-data url data)
+
+      (and (:slug data) (:entries data))
+      (board-unfurl-data url data)
+
+      (:contributions data)
+      (contributions-unfurl-data url data)
+
+      (and (:slug data) (:boards data))
+      (org-unfurl-data url data)
+
+      :else
+      false)))
 
 (defn update-slack-url
   "Posts back to the Slack API to add information to one of our urls.
    https://api.slack.com/docs/message-link-unfurling
    Also see open-company-lib for slack unfurl function.
   "
-  [token channel ts url data]
-  (let [url-data (when data
-                   (cond
-
-                    (and (:headline data) (:body data))
-                    (post-unfurl-data url data)
-
-                    (:all-posts data)
-                    (all-posts-unfurl-data url data)
-
-                    (and (:slug data) (:entries data))
-                    (board-unfurl-data url data)
-
-                    (:contributions data)
-                    (contributions-unfurl-data url data)
-
-                    (and (:slug data) (:boards data))
-                    (org-unfurl-data url data)
-
-                    :else
-                    false))
-        unfurl-response (when url-data
+  [token channel ts url-data]
+  (let [unfurl-response (when url-data
                           (slack-lib/unfurl-post-url token channel ts url-data))]
     (if unfurl-response
       (do
         (timbre/infof "Slack unfurl did complete, output: %s" unfurl-response)
         unfurl-response)
-      (timbre/errorf "Slack unfurl did NOT complete, data:\n%s\nurl-data:\n%s\nunfurl-response:\n%s" data url-data unfurl-response))))
+      (timbre/errorf "Slack unfurl did NOT complete, \nurl-data:\n%s\nunfurl-response:\n%s" url-data unfurl-response))))
 
 (defn parse-carrot-url [url]
   (let [split-url (string/split (:url url) #"/")
@@ -299,13 +298,47 @@
        (some #(when (= (:slack-org-id %) slack-org-id)
                 (:token %)))))
 
+(defn- ephemeral-blocks-for-link [link board-data channel slack-user-id]
+  (timbre/infof "Will create ephemeral blocks with channel: %s and slack-user-id" channel slack-user-id)
+  (json/encode [{:type "section"
+                 :text {:type "mrkdwn",
+                        :text (format "*Warning, private topic*\nThe link %s belongs to the Carrot topic *%s* which is private :lock:, showing informations about it could leak sensitive informations.\nDo you want to show the link info anyway?" link (:name board-data))}}
+                {:type "divider"}
+                {:type "actions"
+                  :elements [{:type "button"
+                              :text {:type "plain_text"
+                                    :text "Yes, show link info"
+                                    :emoji true}
+                              :action_id "confirmed"
+                              :value (str link "||" (private-unfurl/channel-id-user-id channel slack-user-id))}
+                             {:type "button"
+                              :text {:type "plain_text"
+                                     :text "No, don't show link info"
+                                     :emoji true}
+                              :action_id "unfurl_denied"
+                              :value (str link "||" (private-unfurl/channel-id-user-id channel slack-user-id))}]}]))
+
+(defn send-unfurl-confirmation-message [token slack-user-id channel link board-data message-ts unfurl-data]
+  (let [blocks (ephemeral-blocks-for-link (:url link) board-data channel slack-user-id)
+        text "The link in this message belongs to a private Carrot topic. Proceeding might result in a leak of informations. Are yhou sure you want to show informations about this link?"]
+    (timbre/debugf "Sending ephemeral confirmation message for unfurl link %s. Slack token %s\nChannel %s\nMessage ts: %s\nText %s\nBlocks %s" (:url link) token channel message-ts text blocks)
+    (timbre/infof "Store! unfurl-url %s channel-id %s user-id %s unfurl-data %s" (:url link) channel slack-user-id unfurl-data)
+    (private-unfurl/store! (:url link) channel slack-user-id (json/generate-string {:token token
+                                                                                    :channel channel
+                                                                                    :link link
+                                                                                    :message-ts message-ts
+                                                                                    :slack-user-id slack-user-id
+                                                                                    :unfurl-content unfurl-data}))
+    (timbre/debugf "Stored data into dynamodb for link %s with channel %s and user-id %s" (:url link) channel slack-user-id)
+    (timbre/tracef "Stored unfurl data: %s" unfurl-data)
+    (slack-lib/post-ephemeral-blocks token channel text slack-user-id blocks message-ts)))
+
 (defn unfurl
   "given a url in the form {'url' <link> 'domain' <carrot.io>}
    ask if it is a post and if so query storage service for more info."
-  [token team-id channel link message_ts]
+  [token slack-token channel link message-ts slack-user-id join-channel?]
   ;; split url
   (let [parsed-link (parse-carrot-url link)
-        slack-token (bot-token-for-org team-id token)
         url-type (:url-type parsed-link)
         request-url (cond
                      (= "secure-uuid" url-type)
@@ -344,38 +377,64 @@
        (= "org" url-type)
        (get-data url-type request-url token
                  (fn [data]
-                   (update-slack-url slack-token channel message_ts link data)))
+                   (update-slack-url slack-token channel message-ts (unfurl-content link data))))
 
        (= "all-posts" url-type)
        (get-data url-type request-url token
                  (fn [org-data]
-                   (update-slack-url slack-token channel message_ts link
-                                     (assoc org-data :all-posts true :feed-slug (:feed-slug parsed-link)))))
+                   (update-slack-url slack-token channel message-ts (unfurl-content link
+                                     (assoc org-data :all-posts true :feed-slug (:feed-slug parsed-link))))))
 
        (= "board" url-type)
        (get-data url-type (storage-request-org-url (:org parsed-link)) token
                  (fn [org-data]
                    (get-data url-type request-url token
                              (fn [data]
-                               (when-not (= "private" (:access data))
-                                 (update-slack-url slack-token channel message_ts link
-                                                   (assoc data :org-data org-data)))))))
+                               (let [data-with-org (assoc data :org-data org-data)
+                                     unfurl-payload (unfurl-content link data-with-org)]
+                                 (if (= "private" (:access data))
+                                   (if-not (= channel "COMPOSER")
+                                     (do
+                                       (when join-channel?
+                                         (timbre/infof "Bot is not in %s channel, will try join now..." channel)
+                                         (slack-lib/join-channel slack-token channel))
+                                       (timbre/infof "Sending ephemeral message now to user %s for unfurl of private board link %s" slack-user-id (:url link))
+                                       (send-unfurl-confirmation-message slack-token slack-user-id channel link data message-ts unfurl-payload))
+                                     (timbre/infof "Skip unfurl request for link %s by user %s, message is still being composed" (:url link) slack-user-id))
+                                   (update-slack-url slack-token channel message-ts unfurl-payload)))))))
 
        (= "contributions" url-type)
        (get-data url-type request-url token
                  (fn [org-data]
                    (let [contribs (auth-lib/active-users token config/auth-server-url (:team-id org-data))
                          contributions-data (some #(when (= (:user-id %) (:contributions-id parsed-link)) %) (-> contribs :collection :items))]
-                     (update-slack-url slack-token channel message_ts link
+                     (update-slack-url slack-token channel message-ts (unfurl-content link
                                        (assoc org-data :contributions true
                                                        :contributions-id (:contributions-id parsed-link)
-                                                       :contributions-data contributions-data)))))
+                                                       :contributions-data contributions-data))))))
         :else
         (get-data url-type (storage-request-board-url (:org parsed-link) (:board parsed-link)) token
                   (fn [board-data]
-                    (if (= "private" (:access board-data))
-                      (timbre/warnf "Skipping unfurl for post %s, board %s has %s access" (:uuid parsed-link) (:board-uuid parsed-link) (:access board-data))
-                      (get-data url-type request-url token
-                                (fn [data]
-                                  (update-slack-url slack-token channel message_ts link
-                                   (assoc data :board-slug (:board parsed-link))))))))))))
+                    (get-data url-type request-url token
+                      (fn [data]
+                        (let [data-with-board (assoc data :board-slug (:board parsed-link))
+                              unfurl-payload (unfurl-content link data-with-board)]
+                          (if (= "private" (:access board-data))
+                            (if-not (= channel "COMPOSER")
+                              (do
+                                (when join-channel?
+                                  (timbre/infof "Bot is not in %s channel, will try join now..." channel)
+                                  (slack-lib/join-channel slack-token channel))
+                                (timbre/infof "Sending ephemeral message now to user %s for unfurl of private board link %s" slack-user-id (:url link))
+                                (send-unfurl-confirmation-message slack-token slack-user-id channel link board-data message-ts unfurl-payload))
+                              (timbre/infof "Skip unfurl request for link %s by user %s, message is still being composed" (:url link) slack-user-id))
+                            (update-slack-url slack-token channel message-ts unfurl-payload)))))))))))
+
+(defn unfurl-links [token team-id channel links message-ts slack-user-id is-bot-user-member]
+  (let [slack-token (bot-token-for-org team-id token)
+        updated-links (if (not is-bot-user-member)
+                        (update links 0 merge {:join-channel? true})
+                        links)]
+    (doseq [link updated-links]
+      (timbre/infof "Unfurl request for %s channel %s team-id %s message-ts %s slack-user-id %s" link channel team-id message-ts slack-user-id)
+      (unfurl token slack-token channel link message-ts slack-user-id (:join-channel? link)))))

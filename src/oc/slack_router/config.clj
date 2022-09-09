@@ -17,7 +17,7 @@
 
 ;; ----- Logging (see https://github.com/ptaoussanis/timbre) -----
 
-(defonce log-level (if-let [ll (env :log-level)] (keyword ll) :info))
+(defonce log-level :trace) ;; (if-let [ll (env :log-level)] (keyword ll) :info))
 
 ;; ----- Sentry -----
 
@@ -76,3 +76,17 @@
 ;; ----- Filestack -----
 
 (defonce filestack-api-key (env :filestack-api-key))
+
+;; ----- DynamoDB -----
+
+(defonce migrations-dir "./src/oc/slack_router/db/migrations")
+(defonce migration-template "./src/oc/slack_router/assets/migration.template.edn")
+
+(defonce dynamodb-end-point (or (env :dynamodb-end-point) "http://localhost:8000"))
+
+(defonce dynamodb-table-prefix (or (env :dynamodb-table-prefix) "local"))
+
+(defonce dynamodb-opts {:access-key (env :aws-access-key-id)
+                        :secret-key (env :aws-secret-access-key)
+                        :endpoint dynamodb-end-point
+                        :table-prefix dynamodb-table-prefix})

@@ -6,24 +6,52 @@
             [liberator.core :refer (defresource by-method)]
             [clojure.string :as string]
             [cheshire.core :as json]
+            [clj-http.client :as http]
             [oc.lib.api.common :as api-common]
             [oc.lib.auth :as auth]
             [oc.lib.slack :as slack-lib]
             [oc.slack-router.async.usage :as usage]
             [oc.slack-router.slack-unfurl :as slack-unfurl]
             [oc.slack-router.async.slack-sns :as slack-sns]
+            [oc.slack-router.resources.private-unfurl :as private-unfurl]
             [oc.slack-router.config :as config]))
+
+(defn dismiss-unfurl-confirm [response-url unfurl-content]
+  (timbre/infof "Dismiss ephemeral message. Unfurl data %s" unfurl-content)
+  (http/post response-url
+             {:headers {"Content-type" "application/json"}
+              :body (json/encode {:response_type "ephemeral"
+                                  :text ""
+                                  :replace_original true
+                                  :delete_original true})}))
+
+(defn interactions-handler [params payload]
+  (timbre/infof "Interactions-handler params %s" params)
+  (timbre/debugf "Payload %s" payload)
+  (let [bt-value (some-> payload :actions first :value)
+        bt-action-id (some-> payload :actions first :action_id)
+        [unfurl-url channel-id-user-id] (string/split bt-value #"\|\|")
+        private-unfurl-data (private-unfurl/retrieve unfurl-url channel-id-user-id)
+        {:keys [token channel message-ts unfurl-content]} (json/parse-string (:unfurl-data private-unfurl-data) true)]
+    (timbre/infof "Interaction value %s, action-id %s" bt-value bt-action-id)
+    (timbre/infof "Split values: unfurl-url %s channel-id-user-id %s" unfurl-url channel-id-user-id)
+    (dismiss-unfurl-confirm (:response_url payload) unfurl-content)
+    (when private-unfurl-data
+      (private-unfurl/delete! unfurl-url channel-id-user-id))
+    (when (and private-unfurl-data
+             (= bt-action-id "confirmed"))
+      (timbre/infof "Positive response, will unfurl link %s now" unfurl-url)
+      (slack-unfurl/update-slack-url token channel message-ts unfurl-content))))
 
 (defn render-slack-unfurl [token body]
   (let [event (:event body)
         links (:links event)
         team-id (:team_id body)
-        message_ts (:message_ts event)
-        channel (:channel event)]
-    (doseq [link links]
-      (timbre/infof "Unfurl request for %s channel %s team-id %s message_ts %s" link channel team-id message_ts)
-      ;; Post back to slack with added info
-      (slack-unfurl/unfurl token team-id channel link message_ts))
+        message-ts (:message_ts event)
+        channel (:channel event)
+        slack-user-id (:user event)
+        is-bot-user-member (:is_bot_user_member event)]
+    (slack-unfurl/unfurl-links token team-id channel links message-ts slack-user-id is-bot-user-member)
     {:status 200 :body (json/generate-string {})}))
 
 (defn- channel-from-event [body]
@@ -376,6 +404,39 @@
   ;; Responses
   :post! slack-action-handler)
 
+(defresource slack-interaction [params]
+  (api-common/anonymous-resource config/passphrase)
+
+  :allowed-methods [:options :post :get]
+
+  :authorized? true
+
+  ;; Slack authorization
+  :allowed? (by-method {:options (fn [ctx] (api-common/allow-anonymous ctx))
+                        :post (fn [ctx]
+                                (dosync
+                                (let [params (get-in ctx [:request :params])
+                                      payload-str (:payload params)
+                                      payload (json/parse-string payload-str true)
+                                      token (or (:token payload)
+                                                (:token params))] ;; Token is in the params for url verification
+                                  ;; Token check
+                                  (if-not (= token config/slack-verification-token)
+                                    ;; Eghads! It might be a Slack impersonator!
+                                    (do
+                                      (timbre/warn "Slack verification token mismatch, request provided:" token)
+                                      [false, {:reason "Slack verification token mismatch."}])
+                                    [true, {:payload payload}]))))})
+
+  ;; Media type client accepts
+  :available-media-types ["application/json"]
+  :handle-not-acceptable (fn [_] (api-common/only-accept 406 "application/json"))
+
+    ;; Responses
+  :post! (fn [ctx] (when (some-> ctx :payload :actions count (> 0))
+                     (interactions-handler params (:payload ctx)))
+           {:ok true}))
+
 ;; ----- Routes -----
 
 (defn routes [sys]
@@ -384,4 +445,7 @@
    (POST "/slack-event" [:as request] (slack-event request))
    (GET "/slack-event" {params :params} (slack-event params))
    (OPTIONS "/slack-action" [:as request] (slack-action request))
-   (POST "/slack-action" [:as request] (slack-action request))))
+   (POST "/slack-action" [:as request] (slack-action request))
+   (OPTIONS "/slack-interaction" {params :params} (slack-interaction params))
+   (POST "/slack-interaction" {params :params} (slack-interaction params))
+   ))
